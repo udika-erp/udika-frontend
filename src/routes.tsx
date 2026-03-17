@@ -1,15 +1,15 @@
 import { createBrowserRouter } from "react-router";
 import { MainLayout } from "@/layouts/MainLayout";
-import { Dashboard } from "@/pages/Dashboard";
-import { Login } from "@/pages/Login";
-import { CRM } from "@/pages/CRM";
-import { CustomerDetail } from "@/pages/CustomerDetail";
-import { EventManagement } from "@/pages/EventManagement";
-import { EventDetail } from "@/pages/EventDetail";
-import { CalendarPage } from "@/pages/CalendarPage";
-import { Reports } from "@/pages/Reports";
-import { EmployeeList } from "@/pages/EmployeeList";
-import { Attendance } from "@/pages/Attendance";
+import { Dashboard } from "@/pages";
+import { Login } from "@/pages/login";
+import { CRM } from "@/pages/crm";
+import { CustomerDetail } from "@/pages/crm/detail";
+import { EventManagement } from "@/pages/events";
+import { EventDetail } from "@/pages/events/detail";
+import { CalendarPage } from "@/pages/calendar";
+import { Reports } from "@/pages/reports";
+import { EmployeeList } from "@/pages/employees";
+import { Attendance } from "@/pages/attendance";
 
 export const router = createBrowserRouter([
   {

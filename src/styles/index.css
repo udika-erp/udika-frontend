@@ -1,0 +1,16 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+@import 'nprogress/nprogress.css';
+
+/* Override nprogress bar color to match primary theme token */
+#nprogress .bar {
+  background: var(--primary) !important;
+}
+#nprogress .peg {
+  box-shadow: 0 0 10px var(--primary), 0 0 5px var(--primary) !important;
+}
+#nprogress .spinner-icon {
+  border-top-color: var(--primary) !important;
+  border-left-color: var(--primary) !important;
+}

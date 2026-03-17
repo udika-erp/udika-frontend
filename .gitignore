@@ -6,3 +6,7 @@ dist/
 *.local
 playwright-report/
 test-results/
+.claude/
+.agents/
+docs/
+openspec/

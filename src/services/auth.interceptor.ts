@@ -29,7 +29,7 @@ export function setupAuthInterceptor() {
   api.interceptors.response.use(
     (response) => response,
     async (error: AxiosError<unknown, RetryableRequestConfig>) => {
-      const originalRequest = error.config;
+      const originalRequest = error.config as RetryableRequestConfig | undefined;
 
       // If no config or not 401 or already retrying
       if (!originalRequest || error.response?.status !== 401 || originalRequest._retry) {
@@ -65,7 +65,8 @@ export function setupAuthInterceptor() {
         // Refresh failed → logout and reject queued requests
         processQueue('', refreshError);
         clearTokens();
-        useAuthStore.getState().clearAuth();
+        // TODO: Update to clearAuth after Task 5 (auth store refactor)
+        useAuthStore.getState().clearToken();
         queryClient.clear();
         window.location.href = '/login';
         return Promise.reject(refreshError);

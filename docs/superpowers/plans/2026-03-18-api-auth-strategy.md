@@ -50,6 +50,57 @@ src/
 
 ---
 
+## Task 0: Verify Environment Files
+
+**Files:**
+- Verify: `.env.dev`
+- Verify: `.env.prod`
+
+**Purpose:** Ensure environment files exist with correct API base URL.
+
+- [ ] **Step 1: Check if .env.dev exists**
+
+```bash
+cat .env.dev
+```
+
+Expected output: `VITE_API_BASE_URL=http://localhost:3000/api`
+
+- [ ] **Step 2: Create .env.dev if missing**
+
+```bash
+# .env.dev
+VITE_API_BASE_URL=http://localhost:3000/api
+```
+
+- [ ] **Step 3: Check if .env.prod exists**
+
+```bash
+cat .env.prod
+```
+
+Expected output: `VITE_API_BASE_URL=https://api.udika.vn/api`
+
+- [ ] **Step 4: Create .env.prod if missing**
+
+```bash
+# .env.prod
+VITE_API_BASE_URL=https://api.udika.vn/api
+```
+
+- [ ] **Step 5: Commit if created**
+
+```bash
+git add .env.dev .env.prod
+git commit -m "chore: add environment configuration files
+
+Define VITE_API_BASE_URL for dev and prod environments
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
+```
+
+---
+
 ## Task 1: Create API Types
 
 **Files:**
@@ -716,7 +767,11 @@ export function setupAuthInterceptor(): void {
         const { accessToken } = await authService.refreshToken();
 
         // Update stored token
-        setTokens(accessToken, getRefreshToken()!);
+        const currentRefreshToken = getRefreshToken();
+        if (!currentRefreshToken) {
+          throw new Error('No refresh token available during refresh');
+        }
+        setTokens(accessToken, currentRefreshToken);
 
         // Process queued requests with new token
         processQueue(accessToken, null);
@@ -1208,7 +1263,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ## Task 14: Create Customer Types
 
 **Files:**
-- Create: `src/services/features/CustomersService.ts` (types first)
+- Create: `src/lib/customer-types.ts`
 
 **Purpose:** Define Customer types for the example feature pattern.
 

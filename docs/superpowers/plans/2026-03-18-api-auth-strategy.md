@@ -123,6 +123,14 @@ export enum ErrorType {
   UNKNOWN = 'UNKNOWN',
 }
 
+export type NormalizedError = {
+  type: ErrorType;
+  message: string;
+  code: string;
+  status: number;
+  details?: unknown;
+};
+
 export function normalizeError(error: unknown): Error {
   // Implementation can be added later if needed
   // For now, existing error-messages.ts handles this
@@ -201,9 +209,9 @@ import { setAccessToken, clearTokens } from './tokens';
 import { useAuthStore } from '@/store/auth.store';
 import { queryClient } from '@/providers/query-provider';
 
-interface RetryableRequestConfig extends InternalAxiosRequestConfig {
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
-}
+};
 
 let isRefreshing = false;
 let failedQueue: Array<
@@ -296,7 +304,7 @@ git commit -m "feat: add 401 auth interceptor with single-flight refresh"
 import { create } from 'zustand';
 import type { User } from '@/features/auth/data/type';
 
-interface AuthState {
+type AuthState = {
   // State (token removed - now in localStorage)
   user: User | null;
   isAuthenticated: boolean;
@@ -306,7 +314,7 @@ interface AuthState {
   setUser: (user: User) => void;
   clearAuth: () => void;
   setAuthenticating: (loading: boolean) => void;
-}
+};
 
 export const useAuthStore = create<AuthState>((set) => ({
   // Initial state

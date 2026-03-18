@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useAuthStore } from '@/store/auth.store';
+import { getAccessToken } from './tokens';
 import {
   getStatusMessage,
   getNetworkErrorMessage,
@@ -15,7 +15,7 @@ export const api = axios.create({
 
 // Request interceptor: attach auth token if present
 api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
+  const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

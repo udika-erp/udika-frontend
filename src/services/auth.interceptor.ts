@@ -66,8 +66,7 @@ export function setupAuthInterceptor() {
         window.location.href = '/login';
         processQueue(null, refreshError);
         clearTokens();
-        // TODO: Update to clearAuth after Task 5 (auth store refactor)
-        useAuthStore.getState().clearToken();
+        useAuthStore.getState().clearAuth();
         queryClient.clear();
         return Promise.reject(refreshError);
       } finally {

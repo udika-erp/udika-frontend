@@ -189,13 +189,14 @@ git commit -m "feat: add React Query key factories"
 
 **Purpose:** Handle 401 responses with single-flight token refresh and request queuing. Prevents multiple simultaneous refresh attempts.
 
+**Note:** To avoid circular dependency, we use dynamic import for authService inside the refresh handler.
+
 - [ ] **Step 1: Create auth.interceptor.ts with single-flight refresh**
 
 ```typescript
 // src/services/auth.interceptor.ts
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { api } from './api';
-import { authService } from '@/features/auth/service';
 import { setAccessToken, clearTokens } from './tokens';
 import { useAuthStore } from '@/store/auth.store';
 import { queryClient } from '@/providers/query-provider';
@@ -236,6 +237,8 @@ export function setupAuthInterceptor() {
         originalRequest._retry = true;
 
         try {
+          // Dynamic import to avoid circular dependency
+          const { authService } = await import('@/features/auth/service');
           // Attempt refresh
           const { accessToken } = await authService.refreshToken();
           setAccessToken(accessToken);
@@ -283,6 +286,8 @@ git commit -m "feat: add 401 auth interceptor with single-flight refresh"
 - Modify: `src/store/auth.store.ts`
 
 **Purpose:** Store user data in Zustand while tokens remain in localStorage. Remove `token` property since tokens are now in localStorage.
+
+**Breaking Change:** After this task, any code using `useAuthStore.getState().token` will break. Search codebase for this usage before proceeding.
 
 - [ ] **Step 1: Update auth.store.ts to include user data**
 
@@ -415,7 +420,124 @@ git commit -m "refactor: api reads token from localStorage, adds 401 interceptor
 
 ---
 
-## Task 7: Create Login Mutation Hook
+## Task 6.5: Enable Global Query Error Handler
+
+**Files:**
+- Modify: `src/App.tsx` or `src/main.tsx`
+
+**Purpose:** Call `useGlobalQueryErrorHandler()` hook to enable automatic error toasts for React Query errors.
+
+- [ ] **Step 1: Find where QueryProvider is used**
+
+```bash
+grep -r "QueryProvider" src/
+```
+
+Expected: Find where `<QueryProvider>` wraps the app
+
+- [ ] **Step 2: Add useGlobalQueryErrorHandler call**
+
+Find the root component or layout where QueryProvider is used, and add the hook call:
+
+```typescript
+// Example in App.tsx or root layout
+import { useGlobalQueryErrorHandler } from '@/providers/query-provider';
+
+function App() {
+  // Enable global error handling for React Query
+  useGlobalQueryErrorHandler();
+
+  return (
+    <QueryProvider>
+      {/* ... rest of app */}
+    </QueryProvider>
+  );
+}
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/App.tsx
+# or src/main.tsx depending on where you added it
+git commit -m "feat: enable global query error handler"
+```
+
+---
+
+## Task 7: Create Logout Mutation Hook (Optional)
+
+**Files:**
+- Create: `src/features/auth/hooks/use-logout.ts`
+
+**Purpose:** React Query mutation hook for logout. Clears tokens from localStorage, user from Zustand, redirects to login.
+
+**Note:** This task is optional if logout UI isn't implemented yet. Skip if not needed.
+
+- [ ] **Step 1: Create use-logout.ts hook**
+
+```typescript
+// src/features/auth/hooks/use-logout.ts
+import { useMutation } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
+import { authService } from '../service';
+import { clearTokens } from '@/services/tokens';
+import { useAuthStore } from '@/store/auth.store';
+import { useAppToast } from '@/hooks/use-app-toast';
+import { queryClient } from '@/providers/query-provider';
+import { queryKeys } from '@/lib/query-keys';
+
+export function useLogout() {
+  const navigate = useNavigate();
+  const toast = useAppToast();
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+
+  return useMutation({
+    mutationKey: queryKeys.auth.user(),
+
+    mutationFn: async () => {
+      return await authService.logout();
+    },
+
+    onSuccess: () => {
+      // Clear tokens from localStorage
+      clearTokens();
+
+      // Clear user from Zustand
+      clearAuth();
+
+      // Clear React Query cache
+      queryClient.clear();
+
+      // Show success message
+      toast.success('Đăng xuất thành công!');
+
+      // Redirect to login
+      navigate('/login');
+    },
+
+    onError: (error: { message: string }) => {
+      console.error('Logout failed:', error.message);
+      // Even if API call fails, clear local auth state
+      clearTokens();
+      clearAuth();
+      queryClient.clear();
+      navigate('/login');
+    },
+  });
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add src/features/auth/hooks/use-logout.ts
+git commit -m "feat: add logout mutation hook"
+```
+
+---
+
+## Task 8: Create Login Mutation Hook
 
 **Files:**
 - Create: `src/features/auth/hooks/use-login.ts`
@@ -480,7 +602,7 @@ git commit -m "feat: add login mutation hook"
 
 ---
 
-## Task 8: Integrate Login Hook in LoginForm
+## Task 9: Integrate Login Hook in LoginForm
 
 **Files:**
 - Modify: `src/features/auth/components/LoginForm.tsx`
@@ -602,7 +724,7 @@ git commit -m "feat: integrate login hook in LoginForm"
 
 ---
 
-## Task 9: Update AuthService Mock Refresh
+## Task 10: Update AuthService Mock Refresh
 
 **Files:**
 - Modify: `src/features/auth/service/index.ts`
@@ -651,7 +773,7 @@ git commit -m "refactor: use tokens.ts in AuthService refreshToken"
 
 ---
 
-## Task 10: Verify Build and Type Check
+## Task 11: Verify Build and Type Check
 
 **Files:**
 - Run: Type check, build
@@ -661,11 +783,12 @@ git commit -m "refactor: use tokens.ts in AuthService refreshToken"
 - [ ] **Step 1: Run TypeScript type check**
 
 ```bash
-npm run type-check
-# Or: npx tsc --noEmit
+npx tsc --noEmit
 ```
 
 Expected: No type errors
+
+**Note:** Project doesn't have `npm run type-check` script. Use `npx tsc --noEmit` directly.
 
 - [ ] **Step 2: Run build**
 
@@ -688,7 +811,7 @@ git commit -m "fix: resolve type errors and build issues"
 
 ---
 
-## Task 11: Manual Testing
+## Task 12: Manual Testing
 
 **Purpose:** Verify the login flow works end-to-end.
 

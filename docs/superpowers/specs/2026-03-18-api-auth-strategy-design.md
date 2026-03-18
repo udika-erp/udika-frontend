@@ -29,35 +29,39 @@ src/
 │   ├── api.types.ts              # Shared API types
 │   ├── tokens.ts                 # Token utilities (get/set/clear from localStorage)
 │   ├── auth.interceptor.ts       # 401/refresh logic
-│   ├── api.ts                    # Axios instance (existing, enhanced)
-│   │
-│   └── features/
-│       ├── AuthService.ts        # extends BaseApiClient, baseUrl = '/auth'
-│       ├── CustomersService.ts   # extends BaseApiClient, baseUrl = '/customers'
-│       └── ...                   # Other feature services
+│   └── api.ts                    # Axios instance (existing, enhanced)
 │
-├── store/
-│   └── auth.store.ts             # User data + auth methods (tokens in localStorage)
-│
-├── lib/
+├── data/                         # Project-level constants, enums
 │   ├── error-messages.ts         # Existing (keep)
 │   ├── error-types.ts            # New: ErrorType enum, normalizeError
 │   └── query-keys.ts             # React Query key factories
+│
+├── store/                        # Project-level stores
+│   └── auth.store.ts             # User data (tokens in localStorage)
 │
 ├── providers/
 │   └── query-provider.tsx        # React Query provider (enhanced)
 │
 └── features/
     ├── auth/
+    │   ├── service/
+    │   │   └── index.ts          # AuthService (extends BaseApiClient)
+    │   ├── data/
+    │   │   ├── type.ts           # Auth specific types
+    │   │   └── const.ts          # Auth constants
+    │   ├── store/                # Feature-specific store (if needed)
     │   ├── hooks/
     │   │   └── use-login.ts      # Login mutation hook
     │   └── components/           # Existing (no UI changes)
     │
-    └── customers/
-        └── hooks/
-            ├── use-customers.ts              # List query
-            ├── use-customer.ts               # Detail query
-            └── use-customer-mutations.ts     # CRUD mutations
+    └── [feature]/
+        ├── service/
+        │   └── index.ts          # Feature service (extends BaseApiClient)
+        ├── data/
+        │   ├── type.ts           # Feature specific types
+        │   └── const.ts          # Feature constants
+        ├── store/                # Feature-specific store (if needed)
+        └── hooks/                # React Query hooks
 ```
 
 ## Migration Strategy
@@ -79,8 +83,8 @@ interface AuthState {
 - `useAuthStore` provides convenience access to user state
 
 **Migration steps:**
-1. Create new `tokens.ts` for localStorage operations
-2. Enhance `auth.store.ts` with user data (remove `token` property)
+1. Create new `services/tokens.ts` for localStorage operations
+2. Enhance `src/store/auth.store.ts` with user data (remove `token` property)
 3. Update axios interceptor to read from `localStorage` instead of Zustand
 4. This is a breaking change but isolated to auth layer
 
@@ -102,9 +106,11 @@ interface AuthState {
 ### Token Model
 
 ```typescript
-// localStorage keys
-const ACCESS_TOKEN_KEY = 'access_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
+// src/features/auth/data/const.ts
+export const STORAGE_KEYS = {
+  ACCESS_TOKEN: 'access_token',
+  REFRESH_TOKEN: 'refresh_token',
+} as const;
 ```
 
 ### Login Flow
@@ -123,28 +129,21 @@ User submits form
 **API Interfaces:**
 
 ```typescript
+// src/features/auth/data/type.ts
 interface LoginRequest {
   email: string;
   password: string;
 }
 
-interface LoginResponse {
-  success: true;
-  data: {
-    accessToken: string;
-    refreshToken: string;
-    user: {
-      id: string;
-      email: string;
-      role: 'ADMIN' | 'USER';
-      name: string;
-    };
-  };
-  message: string;
+interface LoginResponseData {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
 }
 
-interface LogoutResponse {
+interface LoginResponse {
   success: true;
+  data: LoginResponseData;
   message: string;
 }
 ```
@@ -180,7 +179,7 @@ Response
 **Implementation:**
 
 ```typescript
-// services/auth.interceptor.ts
+// src/services/auth.interceptor.ts
 let isRefreshing = false;
 let failedQueue: Array<(token: string) => void> = [];
 
@@ -204,7 +203,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const { accessToken } = await new AuthService().refreshToken();
+        const { accessToken } = await authService.refreshToken();
         // Update localStorage
         setAccessToken(accessToken);
         // Retry queued requests with new token
@@ -232,10 +231,9 @@ api.interceptors.response.use(
 ### Mock Refresh (Temporary)
 
 ```typescript
-// AuthService.ts
+// src/features/auth/service/index.ts
 async refreshToken(): Promise<{ accessToken: string }> {
   // MOCK: Reuse existing access token
-  // TODO: Replace with real API call when backend implements /auth/refresh
   const currentToken = getAccessToken();
   if (!currentToken) throw new Error('No token');
   return { accessToken: currentToken };
@@ -245,17 +243,12 @@ async refreshToken(): Promise<{ accessToken: string }> {
 ### Auth Store Structure (Enhanced)
 
 ```typescript
-// store/auth.store.ts
+// src/store/auth.store.ts
 interface User {
   id: string;
   email: string;
   role: 'ADMIN' | 'USER';
   name: string;
-}
-
-interface StoredTokens {
-  accessToken: string;
-  refreshToken: string;
 }
 
 interface AuthState {
@@ -269,15 +262,12 @@ interface AuthState {
   clearAuth: () => void;
   setAuthenticating: (loading: boolean) => void;
 }
-
-// Note: tokens are NOT stored here anymore
-// Use tokens.ts utilities for localStorage operations
 ```
 
 ### Global Logout
 
 ```typescript
-// services/tokens.ts
+// src/services/tokens.ts
 export function clearAuthAndRedirect() {
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
@@ -285,15 +275,12 @@ export function clearAuthAndRedirect() {
   queryClient.clear(); // Clear React Query cache
   window.location.href = '/login';
 }
-
-// Optionally call logout endpoint if backend implements it
-// AuthService.logout() before clearing local state
 ```
 
 ## Base Service Class
 
 ```typescript
-// services/base/BaseApiClient.ts
+// src/services/base/BaseApiClient.ts
 import { api } from '../api';
 
 export abstract class BaseApiClient {
@@ -303,29 +290,29 @@ export abstract class BaseApiClient {
     this.baseUrl = baseUrl;
   }
 
-  // Unwrap backend response: { success, data, message } → returns data
   protected async GET<T>(url: string, params?: object): Promise<T> {
     const response = await api.get(this.baseUrl + url, { params });
-    return response.data.data; // Unwrap
+    return response.data.data;
   }
 
   protected async POST<T>(url: string, data?: object): Promise<T> {
     const response = await api.post(this.baseUrl + url, data);
-    return response.data.data; // Unwrap
+    return response.data.data;
   }
 
   protected async PUT<T>(url: string, data?: object): Promise<T> {
     const response = await api.put(this.baseUrl + url, data);
-    return response.data.data; // Unwrap
+    return response.data.data;
   }
 
   protected async DELETE<T>(url: string): Promise<T> {
     const response = await api.delete(this.baseUrl + url);
-    return response.data.data; // Unwrap
+    return response.data.data;
   }
 }
 
 // Example usage:
+// src/features/auth/service/index.ts
 class AuthService extends BaseApiClient {
   constructor() {
     super('/auth');
@@ -334,24 +321,7 @@ class AuthService extends BaseApiClient {
   async login(data: LoginRequest): Promise<LoginResponseData> {
     return this.POST<LoginResponseData>('/login', data);
   }
-
-  async logout(): Promise<void> {
-    return this.POST<void>('/logout');
-  }
-
-  async refreshToken(): Promise<{ accessToken: string }> {
-    // Mock implementation
-    const currentToken = getAccessToken();
-    if (!currentToken) throw new Error('No token');
-    return { accessToken: currentToken };
-  }
-}
-
-// Type returned after unwrapping
-interface LoginResponseData {
-  accessToken: string;
-  refreshToken: string;
-  user: User;
+  // ...
 }
 ```
 
@@ -360,7 +330,7 @@ interface LoginResponseData {
 ### Error Types
 
 ```typescript
-// lib/error-types.ts
+// src/data/error-types.ts
 export enum ErrorType {
   NETWORK = 'NETWORK_ERROR',
   VALIDATION = 'VALIDATION_ERROR',
@@ -380,38 +350,12 @@ export interface NormalizedError {
 }
 ```
 
-### Toast Strategy
-
-**Automatic toast (global handler):**
-- Network errors
-- 5xx server errors
-- 401 (after refresh fails)
-
-**Manual handling (suppress toast, handle in UI):**
-- 400 validation errors (form inline)
-- 404 not found (page messaging)
-- 409 conflicts (user notification)
-
-```typescript
-// Hook-level error handling
-const loginMutation = useMutation({
-  mutationFn: AuthService.login,
-  onError: (error: NormalizedError) => {
-    if (error.type === ErrorType.VALIDATION) {
-      // Suppress global toast, show inline
-      form.setError('email', { message: error.message });
-    }
-    // Other errors handled by global toast
-  },
-});
-```
-
 ## API Types
 
 ### Shared Types
 
 ```typescript
-// services/api.types.ts
+// src/services/api.types.ts
 export interface ApiResponse<T> {
   success: true;
   data: T;
@@ -424,123 +368,52 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
 }
-
-export interface PaginationParams {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
-
-// For customer queries
-export interface CustomerQueryParams extends PaginationParams {
-  search?: string;
-  status?: string;
-}
 ```
-
-## Environment Configuration
-
-```bash
-# .env.dev
-VITE_API_BASE_URL=http://localhost:3000/api
-
-# .env.prod
-VITE_API_BASE_URL=https://api.udika.vn/api
-```
-
-**Branch mapping:**
-- `dev` branch → `.env.dev` → `npm run dev` (uses `vite --mode dev`)
-- `main` branch → `.env.prod` → `vite build --mode prod`
-
-Vite automatically loads `.env.{mode}` files based on the `--mode` flag.
 
 ## React Query Integration
 
 ### Query Keys Factory
 
 ```typescript
-// lib/query-keys.ts
+// src/data/query-keys.ts
 export const queryKeys = {
   auth: ['auth'] as const,
   customers: {
     all: ['customers'] as const,
     lists: () => [...queryKeys.customers.all, 'list'] as const,
-    list: (filters: string) => [...queryKeys.customers.lists(), { filters }] as const,
-    details: () => [...queryKeys.customers.all, 'detail'] as const,
-    detail: (id: string) => [...queryKeys.customers.details(), id] as const,
-  },
-  events: {
-    all: ['events'] as const,
     // ...
   },
 };
 ```
 
-### Hook Examples
-
-```typescript
-// features/customers/hooks/use-customers.ts
-export function useCustomers(params?: CustomerQueryParams) {
-  return useQuery({
-    queryKey: queryKeys.customers.list(JSON.stringify(params || {})),
-    queryFn: () => CustomersService.getAll(params),
-  });
-}
-
-// features/customers/hooks/use-customer.ts
-export function useCustomer(id: string) {
-  return useQuery({
-    queryKey: queryKeys.customers.detail(id),
-    queryFn: () => CustomersService.getById(id),
-    enabled: !!id,
-  });
-}
-
-// features/customers/hooks/use-customer-mutations.ts
-export function useCreateCustomer() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: CreateCustomerDto) => CustomersService.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.customers.lists() });
-      toast.success('Khách hàng đã được tạo thành công');
-    },
-  });
-}
-```
-
 ## Implementation Steps
 
-1. Create `services/base/BaseApiClient.ts` with GET, POST, PUT, DELETE (with response unwrapping)
-2. Create `services/tokens.ts` for localStorage operations (getAccessToken, setTokens, clearTokens)
-3. Enhance `store/auth.store.ts` with user data (remove token property, add user, isAuthenticated)
-4. Create `services/AuthService.ts` extending BaseApiClient (login, logout, refreshToken mock)
-5. Create `services/api.types.ts` (ApiResponse, PaginatedResponse, CustomerQueryParams)
-6. Create `services/auth.interceptor.ts` with 401 handling and single-flight refresh
-7. Update `services/api.ts` axios interceptor to read from localStorage instead of Zustand
-8. Wire auth.interceptor into axios response interceptor
-9. Create `features/auth/hooks/use-login.ts` mutation hook
-10. Update `features/auth/components/LoginForm.tsx` to call useLogin (no UI changes)
-11. Create `services/CustomersService.ts` as example pattern (getAll, getById, create, update, delete)
-12. Create `lib/query-keys.ts` with customer key factories
-13. Create `features/customers/hooks/` (use-customers, use-customer, use-customer-mutations)
-14. Enhance `providers/query-provider.tsx` with error handling and toast logic
+1. Create `src/services/api.types.ts` (ApiResponse, PaginatedResponse)
+2. Create `src/services/base/BaseApiClient.ts` (GET, POST, PUT, DELETE)
+3. For each feature (e.g., `auth`):
+   - Create `src/features/auth/data/type.ts` (Specific types)
+   - Create `src/features/auth/data/const.ts` (Specific constants)
+   - Create `src/features/auth/service/index.ts` (Extends BaseApiClient)
+4. Create `src/services/tokens.ts` for localStorage operations
+5. Enhance `src/store/auth.store.ts` with user data
+6. Create `src/services/auth.interceptor.ts` with 401 handling
+7. Update `src/services/api.ts` to use localStorage and interceptor
+8. Create feature hooks in `src/features/[feature]/hooks/`
 
 ## Constraints
 
 - No UI/styling changes
-- Use existing Vietnamese error messages from `lib/error-messages.ts`
-- Follow feature-based folder structure
+- Use existing Vietnamese error messages from `src/data/error-messages.ts`
+- **Follow feature-based folder structure (service/ and data/ in each feature)**
 - Mock refresh until backend implements endpoint
-- Support both dev and prod environments
 
 ## Success Criteria
 
-- Login works with real backend API (`POST /auth/login`)
+- Folder structure matches `src/features/[feature]/service/` and `src/features/[feature]/data/`
+- Project-level enums/constants in `src/data/`
+- Project-level stores in `src/store/`
+- Feature-level stores in `src/features/[feature]/store/` (if needed)
+- Login works with real backend API
 - Tokens stored in localStorage, user data in Zustand
-- Token auto-refreshes on 401 (mocked, easy to swap)
-- Auto-logout when refresh fails
-- Customers page uses real API (when backend implements)
+- Token auto-refreshes on 401
 - Error toasts show correctly
-- Form validation errors display inline (no toast)

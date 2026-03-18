@@ -9,15 +9,15 @@ type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
 };
 
-type QueueCallback = (token: string | Error) => void | PromiseLike<void>;
+type QueueCallback = (token: string) => void | PromiseLike<void>;
 
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: QueueCallback; reject: (error: unknown) => void }> = [];
 
-function processQueue(token: string, error: unknown = null) {
+function processQueue(token: string | null, error: unknown = null) {
   failedQueue.forEach(({ resolve, reject }) => {
-    if (error) {
-      reject(error);
+    if (error || !token) {
+      reject(error || new Error('No token available'));
     } else {
       resolve(token);
     }
@@ -62,13 +62,13 @@ export function setupAuthInterceptor() {
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed → logout and reject queued requests
-        processQueue('', refreshError);
+        // Refresh failed → redirect FIRST to block new requests
+        window.location.href = '/login';
+        processQueue(null, refreshError);
         clearTokens();
         // TODO: Update to clearAuth after Task 5 (auth store refactor)
         useAuthStore.getState().clearToken();
         queryClient.clear();
-        window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

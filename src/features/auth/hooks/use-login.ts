@@ -7,7 +7,13 @@ import { useAuthStore } from '@/store/auth.store';
 import { useAppToast } from '@/hooks/use-app-toast';
 import { queryKeys } from '@/lib/query-keys';
 import type { LoginRequest } from '../data/type';
+import type { NormalizedError } from '@/lib/error-messages';
 
+/**
+ * Login mutation hook.
+ * Authenticates user with email/password, stores tokens and user data,
+ * and navigates to dashboard on success.
+ */
 export function useLogin() {
   const navigate = useNavigate();
   const toast = useAppToast();
@@ -28,8 +34,9 @@ export function useLogin() {
       navigate('/');
     },
 
-    onError: (error: { message: string }) => {
-      console.error('Login failed:', error.message);
+    onError: (error: NormalizedError) => {
+      toast.error(error.message);
+      console.error('Login failed:', error.message, error.code, error.status);
     },
   });
 }

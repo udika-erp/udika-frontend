@@ -5,6 +5,7 @@ import {
   getNetworkErrorMessage,
   type NormalizedError,
 } from '@/lib/error-messages';
+import { setupAuthInterceptor } from './auth.interceptor';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
@@ -52,3 +53,6 @@ api.interceptors.response.use(
     return Promise.reject(normalized);
   },
 );
+
+// Setup 401/refresh interceptor AFTER response interceptor
+setupAuthInterceptor();

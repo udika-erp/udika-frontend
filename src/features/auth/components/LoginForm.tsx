@@ -76,7 +76,7 @@ export function LoginForm() {
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="Enter your password"
+                        placeholder="Nhập mật khẩu"
                         {...field}
                       />
                     </FormControl>

@@ -42,9 +42,9 @@ export function LoginForm() {
               <PartyPopper className="w-10 h-10 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Welcome to EventERP</CardTitle>
+          <CardTitle className="text-2xl">Chào mừng đến với EventERP</CardTitle>
           <CardDescription>
-            Sign in to manage your events and customers
+            Đăng nhập để quản lý sự kiện và khách hàng
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -94,7 +94,7 @@ export function LoginForm() {
             </form>
           </Form>
           <div className="mt-4 text-center text-sm text-gray-500">
-            Demo credentials: Any email/password will work
+            Thông tin dùng thử: Mọi email/mật khẩu đều hoạt động
           </div>
         </CardContent>
       </Card>

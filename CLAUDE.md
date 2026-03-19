@@ -427,3 +427,126 @@ When adding AI features that answer questions from data, run this 30-second chec
 5. Could all relevant data fit in a DB query + context window?
 
 **Rule**: 1+ YES on Q1–Q4 → use `/rag-decision` then `@rag-builder`. All NO → context stuffing.
+
+---
+
+# Backend API Reference
+
+**Base URL**: `http://localhost:3000` (dev), configurable via `VITE_API_URL`
+
+## Fetch Pattern
+
+```typescript
+// Auth: Include Bearer token
+const response = await axios.get('/users', {
+  headers: { Authorization: `Bearer ${token}` }
+})
+
+// Pagination
+const response = await axios.get('/users', {
+  params: { page: 1, limit: 10 }
+})
+```
+
+## Success Response
+
+```json
+{
+  "success": true,
+  "data": { ... },
+  "message": "Operation successful"
+}
+```
+
+## Error Response
+
+```json
+{
+  "success": false,
+  "message": "Error description",
+  "error": {
+    "statusCode": 400,
+    "message": "Validation failed"
+  }
+}
+```
+
+## HTTP Status Codes
+
+| Code | Meaning |
+|------|---------|
+| 200 | Success |
+| 201 | Created |
+| 400 | Bad Request (validation error) |
+| 401 | Unauthorized (missing/invalid token) |
+| 403 | Forbidden (insufficient role) |
+| 404 | Not Found |
+| 500 | Internal Server Error |
+
+## Auth Endpoints
+
+### POST `/auth/register`
+```typescript
+// Request
+{ "email": "user@example.com", "password": "Password123!" }
+
+// Response
+{ "success": true, "data": { "accessToken": "eyJ..." }, "message": "Đăng ký thành công" }
+```
+
+### POST `/auth/login`
+```typescript
+// Request
+{ "email": "user@example.com", "password": "Password123!" }
+
+// Response
+{ "success": true, "data": { "accessToken": "eyJ..." }, "message": "Đăng nhập thành công" }
+```
+
+## Users Endpoints (JWT required)
+
+### GET `/users?page=1&limit=10`
+```json
+{
+  "success": true,
+  "data": {
+    "items": [...],
+    "total": 100,
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+
+### GET `/users/:id`
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "role": "USER",
+    "createdAt": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+## Validation Errors (400)
+
+```json
+{
+  "success": false,
+  "message": "Dữ liệu không hợp lệ",
+  "error": {
+    "statusCode": 400,
+    "message": ["email must be an email", "password is too short"]
+  }
+}
+```
+
+## Auth Errors
+
+| Code | Message |
+|------|---------|
+| 401 | "Unauthorized" - Token missing or invalid |
+| 403 | "Forbidden" - Role insufficient (ADMIN required) |

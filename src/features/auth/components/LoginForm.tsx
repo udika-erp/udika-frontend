@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PartyPopper } from 'lucide-react';
@@ -20,18 +19,18 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { loginSchema, type LoginFormValues } from '../forms/login.schema';
+import { useLogin } from '../hooks/use-login';
 
 export function LoginForm() {
-  const navigate = useNavigate();
+  const login = useLogin();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
 
-  const onSubmit = (_values: LoginFormValues) => {
-    // Mock authentication — navigate to dashboard on any valid form
-    navigate('/');
+  const onSubmit = (values: LoginFormValues) => {
+    login.mutate(values);
   };
 
   return (
@@ -88,9 +87,9 @@ export function LoginForm() {
               <Button
                 type="submit"
                 className="w-full bg-indigo-600 hover:bg-indigo-700"
-                disabled={form.formState.isSubmitting}
+                disabled={login.isPending}
               >
-                Sign In
+                {login.isPending ? 'Đang đăng nhập...' : 'Đăng nhập'}
               </Button>
             </form>
           </Form>

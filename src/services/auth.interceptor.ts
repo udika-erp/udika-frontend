@@ -1,7 +1,7 @@
 // src/services/auth.interceptor.ts
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { api } from './api';
-import { setAccessToken, clearTokens } from './tokens';
+import { setAccessToken, clearTokens, getAccessToken } from './tokens';
 import { useAuthStore } from '@/store/auth.store';
 import { queryClient } from '@/providers/query-provider';
 
@@ -26,17 +26,28 @@ function processQueue(token: string | null, error: unknown = null) {
 }
 
 export function setupAuthInterceptor() {
+  // REQUEST interceptor: attach JWT token
+  api.interceptors.request.use(
+    (config) => {
+      const token = getAccessToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+
+  // RESPONSE interceptor: handle 401 & token refresh
   api.interceptors.response.use(
     (response) => response,
     async (error: AxiosError<unknown, RetryableRequestConfig>) => {
       const originalRequest = error.config as RetryableRequestConfig | undefined;
 
-      // If no config or not 401 or already retrying
       if (!originalRequest || error.response?.status !== 401 || originalRequest._retry) {
         return Promise.reject(error);
       }
 
-      // If refresh is in progress, queue this request
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -50,19 +61,14 @@ export function setupAuthInterceptor() {
       originalRequest._retry = true;
 
       try {
-        // Dynamic import to avoid circular dependency
         const { authService } = await import('@/features/auth/service');
         const { accessToken } = await authService.refreshToken();
         setAccessToken(accessToken);
-
-        // Retry queued requests with new token
         processQueue(accessToken);
 
-        // Retry original request
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed → redirect FIRST to block new requests
         window.location.href = '/login';
         processQueue(null, refreshError);
         clearTokens();

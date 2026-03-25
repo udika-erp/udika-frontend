@@ -11,6 +11,7 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
   headers: {
     'Content-Type': 'application/json',
+    ...(import.meta.env.DEV && { 'ngrok-skip-browser-warning': 'true' }),
   },
 });
 
@@ -33,7 +34,7 @@ api.interceptors.response.use(
       const status: number = error.response.status;
       const serverMessage: string =
         error.response.data?.message ?? getStatusMessage(status);
-      const code: string = error.response.data?.code ?? String(status);
+      const code: string = error.response.data?.errorCode ?? String(status);
 
       normalized = { message: serverMessage, code, status };
     } else if (error.request) {

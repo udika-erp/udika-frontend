@@ -1,7 +1,6 @@
-// src/services/auth.interceptor.ts
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { api } from './api';
-import { setAccessToken, clearTokens, getAccessToken } from './tokens';
+import { setAccessToken, setRefreshToken, clearTokens, getRefreshToken } from './tokens';
 import { useAuthStore } from '@/store/auth.store';
 import { queryClient } from '@/providers/query-provider';
 
@@ -9,15 +8,16 @@ type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
 };
 
-type QueueCallback = (token: string) => void | PromiseLike<void>;
-
 let isRefreshing = false;
-let failedQueue: Array<{ resolve: QueueCallback; reject: (error: unknown) => void }> = [];
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: unknown) => void;
+}> = [];
 
 function processQueue(token: string | null, error: unknown = null) {
   failedQueue.forEach(({ resolve, reject }) => {
     if (error || !token) {
-      reject(error || new Error('No token available'));
+      reject(error ?? new Error('No token available'));
     } else {
       resolve(token);
     }
@@ -26,19 +26,7 @@ function processQueue(token: string | null, error: unknown = null) {
 }
 
 export function setupAuthInterceptor() {
-  // REQUEST interceptor: attach JWT token
-  api.interceptors.request.use(
-    (config) => {
-      const token = getAccessToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => Promise.reject(error)
-  );
-
-  // RESPONSE interceptor: handle 401 & token refresh
+  // RESPONSE interceptor: handle 401 & token refresh with rotation
   api.interceptors.response.use(
     (response) => response,
     async (error: AxiosError<unknown, RetryableRequestConfig>) => {
@@ -49,10 +37,10 @@ export function setupAuthInterceptor() {
       }
 
       if (isRefreshing) {
-        return new Promise((resolve, reject) => {
+        return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token as string}`;
+          originalRequest.headers.Authorization = `Bearer ${token}`;
           return api(originalRequest);
         });
       }
@@ -61,9 +49,14 @@ export function setupAuthInterceptor() {
       originalRequest._retry = true;
 
       try {
+        const refreshToken = getRefreshToken();
+        if (!refreshToken) throw new Error('No refresh token');
+
         const { authService } = await import('@/features/auth/service');
-        const { accessToken } = await authService.refreshToken();
+        const { accessToken, refreshToken: newRefreshToken } = await authService.refresh({ refreshToken });
+
         setAccessToken(accessToken);
+        setRefreshToken(newRefreshToken);
         processQueue(accessToken);
 
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;

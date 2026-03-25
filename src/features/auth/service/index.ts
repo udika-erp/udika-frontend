@@ -1,6 +1,12 @@
 import { BaseApiClient } from '@/services/base/BaseApiClient';
-import type { LoginRequest, LoginResponseData } from '../data/type';
-import { getAccessToken } from '@/services/tokens';
+import type {
+  LoginRequest,
+  LoginResponseData,
+  RefreshRequest,
+  RefreshResponseData,
+  LogoutRequest,
+  Employee,
+} from '../data/type';
 
 export class AuthService extends BaseApiClient {
   constructor() {
@@ -11,16 +17,16 @@ export class AuthService extends BaseApiClient {
     return this.POST<LoginResponseData>('/login', data);
   }
 
-  async logout(): Promise<void> {
-    return this.POST<void>('/logout');
+  async refresh(data: RefreshRequest): Promise<RefreshResponseData> {
+    return this.POST<RefreshResponseData>('/refresh', data);
   }
 
-  async refreshToken(): Promise<{ accessToken: string }> {
-    // Mock implementation: Reuse existing access token
-    // TODO: Replace with real API call when backend implements /auth/refresh
-    const currentToken = getAccessToken();
-    if (!currentToken) throw new Error('No token');
-    return { accessToken: currentToken };
+  async logout(data: LogoutRequest): Promise<void> {
+    return this.POST<void>('/logout', data);
+  }
+
+  async me(): Promise<Employee> {
+    return this.GET<Employee>('/me');
   }
 }
 

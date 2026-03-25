@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router';
+import { Outlet, Link, useLocation } from 'react-router';
 import { useNavigationProgress } from '@/hooks/use-navigation-progress';
+import { useAuthStore } from '@/store/auth.store';
+import { useLogout } from '@/features/auth/hooks';
 import {
   LayoutDashboard,
   Users,
@@ -28,12 +30,19 @@ const navigation = [
 export function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
+  const { employee } = useAuthStore();
+  const logout = useLogout();
   useNavigationProgress();
 
-  const handleLogout = () => {
-    navigate('/login');
-  };
+  // Generate initials from employee.name
+  const initials = employee?.name
+    ? employee.name
+        .split(' ')
+        .slice(-2)
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+    : '??';
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50">
@@ -75,7 +84,7 @@ export function MainLayout() {
               const isActive =
                 location.pathname === item.href ||
                 (item.href !== '/' && location.pathname.startsWith(item.href));
-              
+
               return (
                 <Link
                   key={item.name}
@@ -102,24 +111,25 @@ export function MainLayout() {
           <div className="p-4 border-t border-gray-200">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                <span className="text-indigo-600 font-semibold">AD</span>
+                <span className="text-indigo-600 font-semibold">{initials}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  Admin User
+                  {employee?.name ?? 'Người dùng'}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  admin@eventco.com
+                  {employee?.position ?? ''} — {employee?.department ?? ''}
                 </p>
               </div>
             </div>
             <Button
               variant="outline"
               className="w-full justify-start"
-              onClick={handleLogout}
+              onClick={() => logout.mutate()}
+              disabled={logout.isPending}
             >
               <LogOut className="w-4 h-4 mr-2" />
-              Logout
+              Đăng xuất
             </Button>
           </div>
         </div>
@@ -135,17 +145,19 @@ export function MainLayout() {
           >
             <Menu className="w-6 h-6" />
           </button>
-          
+
           <div className="flex-1 lg:flex-initial" />
-          
+
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+              {employee?.name
+                ? `Xin chào, ${employee.name}`
+                : new Date().toLocaleDateString('vi-VN', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
             </span>
           </div>
         </header>

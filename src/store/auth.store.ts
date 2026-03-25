@@ -1,35 +1,29 @@
-// src/store/auth.store.ts
 import { create } from 'zustand';
-import type { User } from '@/features/auth/data/type';
+import type { Employee } from '@/features/auth/data/type';
 
 type AuthState = {
-  // State (token removed - now in localStorage)
-  user: User | null;
+  employee: Employee | null;
   isAuthenticated: boolean;
   isAuthenticating: boolean;
-
-  // Actions
-  setUser: (user: User) => void;
+  setEmployee: (employee: Employee) => void;
   clearAuth: () => void;
   setAuthenticating: (loading: boolean) => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
-  // Initial state
-  user: null,
+  employee: null,
   isAuthenticated: false,
   isAuthenticating: false,
 
-  // Actions
-  setUser: (user) =>
+  setEmployee: (employee) =>
     set({
-      user,
+      employee,
       isAuthenticated: true,
     }),
 
   clearAuth: () =>
     set({
-      user: null,
+      employee: null,
       isAuthenticated: false,
     }),
 

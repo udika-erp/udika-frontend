@@ -17,7 +17,7 @@ import type { NormalizedError } from '@/lib/error-messages';
 export function useLogin() {
   const navigate = useNavigate();
   const toast = useAppToast();
-  const setUser = useAuthStore((state) => state.setUser);
+  const setEmployee = useAuthStore((state) => state.setEmployee);
 
   return useMutation({
     mutationKey: queryKeys.auth.user(),
@@ -29,7 +29,7 @@ export function useLogin() {
     onSuccess: (response) => {
       setAccessToken(response.accessToken);
       setRefreshToken(response.refreshToken);
-      setUser(response.user);
+      setEmployee(response.employee);
       toast.success('Đăng nhập thành công!');
       navigate('/');
     },

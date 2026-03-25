@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PartyPopper } from 'lucide-react';
+import { Eye, EyeOff, PartyPopper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -20,9 +21,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { loginSchema, type LoginFormValues } from '../forms/login.schema';
 import { useLogin } from '../hooks/use-login';
+import type { NormalizedError } from '@/lib/error-messages';
 
 export function LoginForm() {
   const login = useLogin();
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -30,6 +33,7 @@ export function LoginForm() {
   });
 
   const onSubmit = (values: LoginFormValues) => {
+    form.clearErrors();
     login.mutate(values);
   };
 
@@ -72,18 +76,40 @@ export function LoginForm() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Mật khẩu</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Nhập mật khẩu"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Nhập mật khẩu"
+                          className="pr-10"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              <div className="flex justify-end">
+                <a href="#" className="text-sm text-indigo-600 hover:text-indigo-500">
+                  Quên mật khẩu?
+                </a>
+              </div>
+
               <Button
                 type="submit"
                 className="w-full bg-indigo-600 hover:bg-indigo-700"
@@ -93,9 +119,28 @@ export function LoginForm() {
               </Button>
             </form>
           </Form>
-          <div className="mt-4 text-center text-sm text-gray-500">
-            Thông tin dùng thử: Mọi email/mật khẩu đều hoạt động
-          </div>
+
+          {login.isError && (
+            <div className="mt-4 rounded-md bg-destructive/10 text-destructive text-sm px-4 py-3">
+              {(() => {
+                const err = login.error as NormalizedError;
+                switch (err?.code) {
+                  case 'AUTH_INVALID_CREDENTIALS':
+                    return 'Email hoặc mật khẩu không đúng';
+                  case 'AUTH_RATE_LIMIT_EXCEEDED':
+                    return 'Tài khoản đã bị khóa tạm thời. Vui lòng thử lại sau';
+                  case 'AUTH_ACCOUNT_DISABLED':
+                    return 'Tài khoản đã bị vô hiệu hóa. Liên hệ quản trị viên';
+                  case 'AUTH_ACCOUNT_RESIGNED':
+                    return 'Tài khoản đã nghỉ việc';
+                  case 'NETWORK_ERROR':
+                    return 'Không thể kết nối đến server. Kiểm tra kết nối mạng';
+                  default:
+                    return err?.message ?? 'Đăng nhập thất bại';
+                }
+              })()}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

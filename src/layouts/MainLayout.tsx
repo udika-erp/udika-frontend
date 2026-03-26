@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router';
 import { useNavigationProgress } from '@/hooks/use-navigation-progress';
 import { useAuthStore } from '@/store/auth.store';
 import { useLogout } from '@/features/auth/hooks';
@@ -14,8 +14,15 @@ import {
   PartyPopper,
   UserCog,
   ClipboardCheck,
+  Lock,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const navigation = [
   { name: 'Tổng quan', href: '/', icon: LayoutDashboard },
@@ -30,9 +37,14 @@ const navigation = [
 export function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { employee } = useAuthStore();
   const logout = useLogout();
   useNavigationProgress();
+
+  const handleLogout = () => {
+    logout.mutate();
+  };
 
   // Generate initials from employee.name
   const initials = employee?.name
@@ -109,28 +121,50 @@ export function MainLayout() {
 
           {/* User section */}
           <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                <span className="text-indigo-600 font-semibold">{initials}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {employee?.name ?? 'Người dùng'}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {employee?.position ?? ''} — {employee?.department ?? ''}
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => logout.mutate()}
-              disabled={logout.isPending}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Đăng xuất
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-start gap-3 px-2 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                    <span className="text-indigo-600 font-semibold">
+                      {initials}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {employee?.name ?? 'Người dùng'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {employee?.position ?? ''}
+                    </p>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-1.5 text-sm">
+                  <p className="font-semibold text-gray-900">
+                    {employee?.name}
+                  </p>
+                  <p className="text-xs text-gray-500">{employee?.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <UserCog className="w-4 h-4 mr-2" />
+                  Hồ Sơ Cá Nhân
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/change-password')}>
+                  <Lock className="w-4 h-4 mr-2" />
+                  Đổi Mật Khẩu
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} disabled={logout.isPending}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  {logout.isPending ? 'Đang đăng xuất...' : 'Đăng Xuất'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </aside>

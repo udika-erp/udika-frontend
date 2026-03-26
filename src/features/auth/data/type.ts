@@ -14,6 +14,62 @@ export interface Employee {
   isLoginEnabled: boolean;
   joinDate: string;
   createdAt: string;
+  phone?: string | null;
+  avatar?: string | null;
+  address?: string | null;
+  dateOfBirth?: string | null;
+}
+
+// ==================== Profile & Password Change Types ====================
+
+/**
+ * Update Profile Request - Only editable fields
+ * User can only update: name, phone, avatar
+ */
+export interface UpdateProfileRequest {
+  name: string;
+  phone?: string | null;
+  avatar?: string | null;
+}
+
+/**
+ * Update Profile Response
+ */
+export type UpdateProfileResponse = Employee;
+
+/**
+ * Change Password Request - Self-service password change
+ * Requires current password for verification
+ */
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+/**
+ * Change Password Response
+ */
+export interface ChangePasswordResponse {
+  message: string;
+  requiresLogout: boolean;
+}
+
+/**
+ * Force Change Password Request - Admin-initiated password reset
+ * Does NOT require current password (admin reset case)
+ */
+export interface ForceChangePasswordRequest {
+  newPassword: string;
+}
+
+/**
+ * Profile DTO - Read-only fields for display
+ */
+export interface ProfileReadOnly {
+  email: string;
+  role: UserRole;
+  department: Department;
+  position: Position;
 }
 
 export interface LoginRequest {

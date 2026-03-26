@@ -10,6 +10,9 @@ import { CalendarPage } from '@/pages/calendar';
 import { Reports } from '@/pages/reports';
 import { EmployeeList } from '@/pages/employees';
 import { Attendance } from '@/pages/attendance';
+import ProfilePage from '@/pages/profile';
+import ChangePasswordPage from '@/pages/change-password';
+import ForceChangePasswordPage from '@/pages/force-change-password';
 import { getAccessToken } from '@/services/tokens';
 
 function protectedElement(element: React.ReactNode) {
@@ -20,6 +23,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: getAccessToken() ? <Navigate to="/" replace /> : <Login />,
+  },
+  {
+    path: '/force-change-password',
+    element: <ForceChangePasswordPage />,
   },
   {
     path: '/',
@@ -34,6 +41,8 @@ export const router = createBrowserRouter([
       { path: 'calendar', element: protectedElement(<CalendarPage />) },
       { path: 'reports', element: protectedElement(<Reports />) },
       { path: 'attendance', element: protectedElement(<Attendance />) },
+      { path: 'profile', element: protectedElement(<ProfilePage />) },
+      { path: 'change-password', element: protectedElement(<ChangePasswordPage />) },
     ],
   },
 ]);

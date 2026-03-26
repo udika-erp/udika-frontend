@@ -35,7 +35,7 @@ export interface UpdateProfileRequest {
 /**
  * Update Profile Response
  */
-export interface UpdateProfileResponse extends Employee {}
+export type UpdateProfileResponse = Employee;
 
 /**
  * Change Password Request - Self-service password change

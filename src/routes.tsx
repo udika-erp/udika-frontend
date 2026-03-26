@@ -12,6 +12,7 @@ import { EmployeeList } from '@/pages/employees';
 import { Attendance } from '@/pages/attendance';
 import ProfilePage from '@/pages/profile';
 import ChangePasswordPage from '@/pages/change-password';
+import ForceChangePasswordPage from '@/pages/force-change-password';
 import { getAccessToken } from '@/services/tokens';
 
 function protectedElement(element: React.ReactNode) {
@@ -22,6 +23,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: getAccessToken() ? <Navigate to="/" replace /> : <Login />,
+  },
+  {
+    path: '/force-change-password',
+    element: <ForceChangePasswordPage />,
   },
   {
     path: '/',

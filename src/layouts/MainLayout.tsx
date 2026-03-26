@@ -14,10 +14,8 @@ import {
   PartyPopper,
   UserCog,
   ClipboardCheck,
-  Settings,
   Lock,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,

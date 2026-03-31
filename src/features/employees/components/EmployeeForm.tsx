@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -17,20 +18,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  useCreateEmployee,
+  useUpdateEmployee,
+  useEmployeeDetail,
+  useEmployeeDepartments,
+  useEmployeePositions,
+} from '../hooks';
 import { employeeSchema, type EmployeeFormValues } from '../forms/employee.schema';
 
 interface EmployeeFormProps {
-  defaultValues?: Partial<EmployeeFormValues>;
   onSubmit: (values: EmployeeFormValues) => void;
   onCancel: () => void;
-  isSubmitting?: boolean;
+  employeeId?: string;
 }
 
 export function EmployeeForm({
-  defaultValues,
-  onSubmit,
+  onSubmit: onSubmitProp,
   onCancel,
-  isSubmitting = false,
+  employeeId,
 }: EmployeeFormProps) {
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeSchema),
@@ -41,13 +47,68 @@ export function EmployeeForm({
       position: '',
       department: 'Sales',
       joinDate: '',
-      ...defaultValues,
     },
   });
 
+  // ==================== Queries ====================
+  const { data: employee, isLoading: isLoadingEmployee } = useEmployeeDetail(
+    employeeId || '',
+    !!employeeId
+  );
+  const { data: departments } = useEmployeeDepartments();
+  const { data: positions } = useEmployeePositions();
+
+  // ==================== Mutations ====================
+  const { mutate: createEmployee, isPending: isCreating } = useCreateEmployee();
+  const { mutate: updateEmployee, isPending: isUpdating } = useUpdateEmployee();
+
+  const isSubmitting = isCreating || isUpdating;
+
+  // ==================== Effects ====================
+  // Load employee data when in edit mode
+  useEffect(() => {
+    if (employee && employeeId) {
+      form.reset({
+        name: employee.name || '',
+        phone: employee.phone || '',
+        email: employee.email || '',
+        position: employee.position || '',
+        department: (employee.department as any) || 'Sales',
+        joinDate: employee.joinDate || '',
+      });
+    }
+  }, [employee, employeeId, form]);
+
+  // ==================== Handlers ====================
+  const handleSubmit = (values: EmployeeFormValues) => {
+    if (employeeId) {
+      // Update mode
+      updateEmployee({
+        id: employeeId,
+        data: values,
+      });
+    } else {
+      // Create mode
+      createEmployee(values);
+    }
+
+    // Call parent callback
+    onSubmitProp(values);
+  };
+
+  // ==================== Loading State ====================
+  if (employeeId && isLoadingEmployee) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <p className="text-gray-500">Đang tải dữ liệu...</p>
+      </div>
+    );
+  }
+
+  // ==================== Render ====================
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="name"
@@ -61,6 +122,7 @@ export function EmployeeForm({
             </FormItem>
           )}
         />
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -89,19 +151,32 @@ export function EmployeeForm({
             )}
           />
         </div>
+
         <FormField
           control={form.control}
           name="position"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Chức vụ *</FormLabel>
-              <FormControl>
-                <Input placeholder="Nhân viên Kinh doanh" {...field} />
-              </FormControl>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn chức vụ" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {positions?.map((pos) => (
+                    <SelectItem key={pos.value} value={pos.value}>
+                      {pos.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
         />
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -112,15 +187,15 @@ export function EmployeeForm({
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Chọn phòng ban" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Sales">Kinh doanh</SelectItem>
-                    <SelectItem value="Operations">Vận hành</SelectItem>
-                    <SelectItem value="Marketing">Marketing</SelectItem>
-                    <SelectItem value="Finance">Tài chính</SelectItem>
-                    <SelectItem value="HR">Nhân sự</SelectItem>
+                    {departments?.map((dept) => (
+                      <SelectItem key={dept.value} value={dept.value}>
+                        {dept.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -141,8 +216,9 @@ export function EmployeeForm({
             )}
           />
         </div>
+
         <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Hủy
           </Button>
           <Button
@@ -150,7 +226,14 @@ export function EmployeeForm({
             disabled={isSubmitting}
             className="bg-[#2563EB] hover:bg-[#1d4ed8]"
           >
-            {isSubmitting ? 'Đang lưu...' : 'Lưu'}
+            {isSubmitting ? (
+              <>
+                <span className="inline-block mr-2">⏳</span>
+                {employeeId ? 'Đang cập nhật...' : 'Đang tạo...'}
+              </>
+            ) : (
+              employeeId ? 'Cập nhật' : 'Tạo'
+            )}
           </Button>
         </div>
       </form>

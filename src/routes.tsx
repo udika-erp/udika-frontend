@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router';
+import { createBrowserRouter, Navigate, Outlet } from 'react-router';
 import { MainLayout } from '@/layouts/MainLayout';
 import { Dashboard } from '@/pages';
 import { Login } from '@/pages/login';
@@ -15,14 +15,19 @@ import ChangePasswordPage from '@/pages/change-password';
 import ForceChangePasswordPage from '@/pages/force-change-password';
 import { getAccessToken } from '@/services/tokens';
 
-function protectedElement(element: React.ReactNode) {
-  return getAccessToken() ? element : <Navigate to="/login" replace />;
+function ProtectedRoute() {
+  return getAccessToken() ? <Outlet /> : <Navigate to="/login" replace />;
+}
+
+function GuestRoute() {
+  return getAccessToken() ? <Navigate to="/" replace /> : <Outlet />;
 }
 
 export const router = createBrowserRouter([
   {
     path: '/login',
-    element: getAccessToken() ? <Navigate to="/" replace /> : <Login />,
+    Component: GuestRoute,
+    children: [{ index: true, Component: Login }],
   },
   {
     path: '/force-change-password',
@@ -30,19 +35,24 @@ export const router = createBrowserRouter([
   },
   {
     path: '/',
-    Component: MainLayout,
+    Component: ProtectedRoute,
     children: [
-      { index: true, element: protectedElement(<Dashboard />) },
-      { path: 'crm', element: protectedElement(<CRM />) },
-      { path: 'crm/:id', element: protectedElement(<CustomerDetail />) },
-      { path: 'employees', element: protectedElement(<EmployeeList />) },
-      { path: 'events', element: protectedElement(<EventManagement />) },
-      { path: 'events/:id', element: protectedElement(<EventDetail />) },
-      { path: 'calendar', element: protectedElement(<CalendarPage />) },
-      { path: 'reports', element: protectedElement(<Reports />) },
-      { path: 'attendance', element: protectedElement(<Attendance />) },
-      { path: 'profile', element: protectedElement(<ProfilePage />) },
-      { path: 'change-password', element: protectedElement(<ChangePasswordPage />) },
+      {
+        Component: MainLayout,
+        children: [
+          { index: true, Component: Dashboard },
+          { path: 'crm', Component: CRM },
+          { path: 'crm/:id', Component: CustomerDetail },
+          { path: 'employees', Component: EmployeeList },
+          { path: 'events', Component: EventManagement },
+          { path: 'events/:id', Component: EventDetail },
+          { path: 'calendar', Component: CalendarPage },
+          { path: 'reports', Component: Reports },
+          { path: 'attendance', Component: Attendance },
+          { path: 'profile', element: <ProfilePage /> },
+          { path: 'change-password', element: <ChangePasswordPage /> },
+        ],
+      },
     ],
   },
 ]);

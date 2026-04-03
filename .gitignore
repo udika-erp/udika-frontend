@@ -12,3 +12,4 @@ docs/
 openspec/
 .vercel
 .env*.local
+.playwright-mcp/

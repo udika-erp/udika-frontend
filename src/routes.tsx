@@ -9,6 +9,7 @@ import { EventDetail } from '@/pages/events/detail';
 import { CalendarPage } from '@/pages/calendar';
 import { Reports } from '@/pages/reports';
 import { EmployeeList } from '@/pages/employees';
+import { EmployeeDetail } from '@/pages/employees/detail';
 import { Attendance } from '@/pages/attendance';
 import ProfilePage from '@/pages/profile';
 import ChangePasswordPage from '@/pages/change-password';
@@ -44,6 +45,7 @@ export const router = createBrowserRouter([
           { path: 'crm', Component: CRM },
           { path: 'crm/:id', Component: CustomerDetail },
           { path: 'employees', Component: EmployeeList },
+          { path: 'employees/:id', Component: EmployeeDetail },
           { path: 'events', Component: EventManagement },
           { path: 'events/:id', Component: EventDetail },
           { path: 'calendar', Component: CalendarPage },

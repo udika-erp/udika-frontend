@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { Loader } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -17,20 +19,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  useCreateEmployee,
+  useUpdateEmployee,
+  useEmployeeDetail,
+  useEmployeeDepartments,
+  useEmployeeRoles,
+  useEmployeePositions,
+} from '../hooks';
 import { employeeSchema, type EmployeeFormValues } from '../forms/employee.schema';
 
 interface EmployeeFormProps {
-  defaultValues?: Partial<EmployeeFormValues>;
   onSubmit: (values: EmployeeFormValues) => void;
   onCancel: () => void;
-  isSubmitting?: boolean;
+  employeeId?: string;
 }
 
 export function EmployeeForm({
-  defaultValues,
-  onSubmit,
+  onSubmit: onSubmitProp,
   onCancel,
-  isSubmitting = false,
+  employeeId,
 }: EmployeeFormProps) {
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeSchema),
@@ -38,16 +46,88 @@ export function EmployeeForm({
       name: '',
       phone: '',
       email: '',
-      position: '',
-      department: 'Sales',
+      position: 'Employee',
+      role: undefined,
+      department: 'Board',
       joinDate: '',
-      ...defaultValues,
     },
   });
 
+  // ==================== Queries ====================
+  const { data: employee, isLoading: isLoadingEmployee } = useEmployeeDetail(
+    employeeId || '',
+    !!employeeId
+  );
+  const { data: departments } = useEmployeeDepartments();
+  const { data: roles } = useEmployeeRoles();
+  const { data: positions } = useEmployeePositions();
+
+  // ==================== Mutations ====================
+  const { mutate: createEmployee, isPending: isCreating } = useCreateEmployee();
+  const { mutate: updateEmployee, isPending: isUpdating } = useUpdateEmployee();
+
+  const isSubmitting = isCreating || isUpdating;
+
+  // ==================== Effects ====================
+  // Load employee data when in edit mode
+  useEffect(() => {
+    if (employee && employeeId) {
+      // Sanitize position: only allow valid enum values
+      const validPositions = ['Director', 'Manager', 'Supervisor', 'Employee', 'Intern'];
+      const sanitizedPosition = validPositions.includes(employee.position as string) 
+        ? employee.position 
+        : 'Employee';
+
+      form.reset({
+        name: employee.name || '',
+        phone: employee.phone || '',
+        email: employee.email || '',
+        position: sanitizedPosition as 'Director' | 'Manager' | 'Supervisor' | 'Employee' | 'Intern',
+        role: employee.role || 'Staff',
+        department: employee.department || 'HR',
+        joinDate: employee.joinDate || '',
+      });
+    }
+  }, [employee, employeeId, form]);
+
+  // ==================== Handlers ====================
+  const handleSubmit = (values: EmployeeFormValues) => {
+    if (employeeId) {
+      // Update mode
+      updateEmployee(
+        {
+          id: employeeId,
+          data: values,
+        },
+        {
+          onSuccess: () => {
+            onSubmitProp(values);
+          },
+        }
+      );
+    } else {
+      // Create mode
+      createEmployee(values, {
+        onSuccess: () => {
+          onSubmitProp(values);
+        },
+      });
+    }
+  };
+
+  // ==================== Loading State ====================
+  if (employeeId && isLoadingEmployee) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <p className="text-gray-500">Đang tải dữ liệu nhân viên...</p>
+      </div>
+    );
+  }
+
+  // ==================== Render ====================
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="name"
@@ -55,12 +135,13 @@ export function EmployeeForm({
             <FormItem>
               <FormLabel>Tên nhân viên *</FormLabel>
               <FormControl>
-                <Input placeholder="Nguyễn Văn A" {...field} />
+                <Input placeholder="Vd: Nguyễn Văn A" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -82,67 +163,105 @@ export function EmployeeForm({
               <FormItem>
                 <FormLabel>Email *</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="email@company.vn" {...field} />
+                  <Input type="email" placeholder="email@company.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Vai trò hệ thống *</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn vai trò..." />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {roles?.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="position"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Chức vụ *</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn chức vụ..." />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {positions?.map((position) => (
+                    <SelectItem key={position.value} value={position.value}>
+                      {position.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="department"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Phòng ban *</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn phòng ban..." />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {departments?.map((dept) => (
+                    <SelectItem key={dept.value} value={dept.value}>
+                      {dept.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="joinDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Ngày vào làm *</FormLabel>
               <FormControl>
-                <Input placeholder="Nhân viên Kinh doanh" {...field} />
+                <Input type="date" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="department"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phòng ban *</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Sales">Kinh doanh</SelectItem>
-                    <SelectItem value="Operations">Vận hành</SelectItem>
-                    <SelectItem value="Marketing">Marketing</SelectItem>
-                    <SelectItem value="Finance">Tài chính</SelectItem>
-                    <SelectItem value="HR">Nhân sự</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="joinDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ngày vào làm *</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+
         <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Hủy
           </Button>
           <Button
@@ -150,7 +269,14 @@ export function EmployeeForm({
             disabled={isSubmitting}
             className="bg-[#2563EB] hover:bg-[#1d4ed8]"
           >
-            {isSubmitting ? 'Đang lưu...' : 'Lưu'}
+            {isSubmitting ? (
+              <>
+                <Loader className="w-4 h-4 mr-2 animate-spin" />
+                {employeeId ? 'Đang cập nhật...' : 'Đang tạo...'}
+              </>
+            ) : (
+              employeeId ? 'Cập nhật' : 'Tạo mới'
+            )}
           </Button>
         </div>
       </form>

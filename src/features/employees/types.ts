@@ -11,8 +11,8 @@ export interface Employee {
   phone: string;
   email: string;
   position: string;
-  department: 'Sales' | 'Operations' | 'Marketing' | 'Finance' | 'HR';
-  status: 'Active' | 'Inactive' | 'OnLeave';
+  department: 'Board' | 'HR' | 'Sales' | 'Marketing' | 'Event' | 'Accounting' | 'Admin';
+  status: 'Active' | 'Resigned' | 'OnLeave' | 'Probation';
   joinDate: string;
   updatedAt: string;
 }
@@ -71,31 +71,31 @@ export interface MonthlyAttendanceSummary {
 }
 
 /**
- * PERFORMANCE REVIEW - Entity mới
- * Đánh giá hiệu suất theo kỳ (quý/năm)
+ * PERFORMANCE REVIEW - New entity
+ * Performance evaluation by period (quarterly/annual)
  */
 export interface PerformanceReview {
   id: string;
   employeeId: string;
 
-  // Kỳ đánh giá
+  // Evaluation period
   period: string; // e.g., "Q1 2026", "2025"
-  reviewDate: string; // ISO date, ngày đánh giá
+  reviewDate: string; // ISO date, review date
 
-  // Điểm số
+  // Scores
   score: number; // 1.0 - 5.0
   kpiAchieved: number; // e.g., 8
   kpiTotal: number; // e.g., 10
 
-  // Đánh giá chi tiết
-  strengths: string[]; // Danh sách điểm mạnh
-  improvements: string[]; // Danh sách cần cải thiện
-  comment?: string | null; // Nhận xét tổng hợp
+  // Detailed evaluation
+  strengths: string[]; // List of strengths
+  improvements: string[]; // List of areas for improvement
+  comment?: string | null; // Overall comment
 
-  // Người đánh giá
+  // Person who reviewed
   reviewerId: string;
-  reviewerName?: string; // Populated khi GET
-  reviewerTitle?: string; // Chức vụ người đánh giá
+  reviewerName?: string; // Populated when fetched
+  reviewerTitle?: string; // Reviewer's position/title
 
   // Metadata
   createdAt: string;
@@ -103,8 +103,8 @@ export interface PerformanceReview {
 }
 
 /**
- * EMPLOYEE STATS - Aggregation tổng hợp
- * Thống kê tính toán từ các module khác
+ * EMPLOYEE STATS - Aggregated statistics
+ * Statistics calculated from other modules
  */
 export interface EmployeeStats {
   totalEvents: number; // Tổng sự kiện đã tham gia
@@ -116,8 +116,8 @@ export interface EmployeeStats {
 }
 
 /**
- * ACTIVITY - polymorphic entity từ CRM module
- * Dùng cho Ghi chú nội bộ với targetType='Employee'
+ * ACTIVITY - Polymorphic entity from CRM module
+ * Used for internal notes with targetType='Employee'
  */
 export interface Activity {
   id: string;
@@ -126,9 +126,9 @@ export interface Activity {
   type: 'Note' | 'Call' | 'Email' | 'Task'; // Activity type
   title?: string;
   description: string;
-  createdBy: string; // Employee ID
-  createdByName?: string; // Populated
-  createdByTitle?: string; // Chức vụ
+  createdBy: string; // User ID who created
+  createdByName?: string; // Populated when fetched
+  createdByTitle?: string; // Creator's title/position
   createdAt: string;
   updatedAt: string;
 }
@@ -148,8 +148,8 @@ export interface UpdateEmployeeDetailRequest {
   phone?: string;
   phoneSecondary?: string | null;
   role?: 'SuperAdmin' | 'Admin' | 'HR' | 'Manager' | 'Staff';
-  department?: 'Sales' | 'Operations' | 'Marketing' | 'Finance' | 'HR';
-  status?: 'Active' | 'Inactive' | 'OnLeave';
+  department?: 'Board' | 'HR' | 'Sales' | 'Marketing' | 'Event' | 'Accounting' | 'Admin';
+  status?: 'Active' | 'Resigned' | 'OnLeave' | 'Probation';
   dateOfBirth?: string | null;
   address?: string | null;
   emergencyContactName?: string | null;

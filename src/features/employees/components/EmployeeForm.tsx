@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { Loader } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -72,35 +73,49 @@ export function EmployeeForm({
         name: employee.name || '',
         phone: employee.phone || '',
         email: employee.email || '',
-        role: (employee.role as any) || 'Staff',
-        department: (employee.department as any) || 'HR',
+        role: employee.role || 'Staff',
+        department: employee.department || 'HR',
         joinDate: employee.joinDate || '',
       });
     }
   }, [employee, employeeId, form]);
 
+  // Close dialog when mutation succeeds
+  useEffect(() => {
+    if (!isSubmitting) return;
+    // Mutation completed - this will be handled by onSuccess callback in mutation hooks
+  }, [isSubmitting]);
+
   // ==================== Handlers ====================
   const handleSubmit = (values: EmployeeFormValues) => {
     if (employeeId) {
       // Update mode
-      updateEmployee({
-        id: employeeId,
-        data: values,
-      });
+      updateEmployee(
+        {
+          id: employeeId,
+          data: values,
+        },
+        {
+          onSuccess: () => {
+            onSubmitProp(values);
+          },
+        }
+      );
     } else {
       // Create mode
-      createEmployee(values);
+      createEmployee(values, {
+        onSuccess: () => {
+          onSubmitProp(values);
+        },
+      });
     }
-
-    // Call parent callback
-    onSubmitProp(values);
   };
 
   // ==================== Loading State ====================
   if (employeeId && isLoadingEmployee) {
     return (
       <div className="flex items-center justify-center py-8">
-        <p className="text-gray-500">Đang tải dữ liệu...</p>
+        <p className="text-gray-500">Loading employee data...</p>
       </div>
     );
   }
@@ -114,9 +129,9 @@ export function EmployeeForm({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tên nhân viên *</FormLabel>
+              <FormLabel>Employee Name *</FormLabel>
               <FormControl>
-                <Input placeholder="Nguyễn Văn A" {...field} />
+                <Input placeholder="John Doe" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -129,9 +144,9 @@ export function EmployeeForm({
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Số điện thoại *</FormLabel>
+                <FormLabel>Phone *</FormLabel>
                 <FormControl>
-                  <Input placeholder="0912 345 678" {...field} />
+                  <Input placeholder="+84 912 345 678" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -144,7 +159,7 @@ export function EmployeeForm({
               <FormItem>
                 <FormLabel>Email *</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="email@company.vn" {...field} />
+                  <Input type="email" placeholder="john@company.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -157,11 +172,11 @@ export function EmployeeForm({
           name="role"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Vai trò *</FormLabel>
+              <FormLabel>Role *</FormLabel>
               <Select value={field.value} onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn vai trò" />
+                    <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -182,11 +197,11 @@ export function EmployeeForm({
           name="department"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phòng ban *</FormLabel>
+              <FormLabel>Department *</FormLabel>
               <Select value={field.value} onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn phòng ban" />
+                    <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -207,7 +222,7 @@ export function EmployeeForm({
           name="joinDate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Ngày vào làm *</FormLabel>
+              <FormLabel>Join Date *</FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -218,7 +233,7 @@ export function EmployeeForm({
 
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-            Hủy
+            Cancel
           </Button>
           <Button
             type="submit"
@@ -227,11 +242,11 @@ export function EmployeeForm({
           >
             {isSubmitting ? (
               <>
-                <span className="inline-block mr-2">⏳</span>
-                {employeeId ? 'Đang cập nhật...' : 'Đang tạo...'}
+                <Loader className="w-4 h-4 mr-2 animate-spin" />
+                {employeeId ? 'Updating...' : 'Creating...'}
               </>
             ) : (
-              employeeId ? 'Cập nhật' : 'Tạo'
+              employeeId ? 'Update' : 'Create'
             )}
           </Button>
         </div>

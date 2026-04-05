@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Search, Plus, Eye, Edit, Trash2, ChevronLeft, ChevronRight, AlertCircle, Loader } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -38,12 +38,7 @@ import type { EmployeeFilterParams } from '../data/type';
 import type { EmployeeFormValues } from '../forms/employee.schema';
 
 export function EmployeeList() {
-  let navigate;
-  try {
-    navigate = useNavigate();
-  } catch {
-    navigate = null;
-  }
+  const navigate = useNavigate();
   
   // ==================== State ====================
   const [addOpen, setAddOpen] = useState(false);

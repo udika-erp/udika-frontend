@@ -1,4 +1,6 @@
 import { BaseApiClient } from '@/services/base/BaseApiClient';
+import { performanceReviewService } from './performance-review.service';
+import { activityService } from './activity.service';
 import { MOCK_ROLES, MOCK_POSITIONS, MOCK_DEPARTMENTS, MOCK_STATUSES } from '@/services/mocks/employee-options';
 import { MOCK_EMPLOYEE_DETAILS } from '../types';
 import type { Employee } from '@/features/auth/data/type';
@@ -27,9 +29,9 @@ import type {
 
 /**
  * Employee Service
- * Quản lý tất cả API calls cho Employee module
+ * Manages all API calls for the Employee module
  * 
- * Extends BaseApiClient để tự động unwrap response { statusCode, message, data }
+ * Extends BaseApiClient to automatically unwrap response { statusCode, message, data }
  * API base path: /employees
  */
 export class EmployeeService extends BaseApiClient {
@@ -39,35 +41,24 @@ export class EmployeeService extends BaseApiClient {
 
   /**
    * GET /employees
-   * Lấy danh sách nhân viên với filter & phân trang
+   * Retrieve employee list with filtering and pagination
    * 
    * @param filters - Query parameters
-   * @returns EmployeeListResponse với paginated items
+   * @returns EmployeeListResponse with paginated items
    */
   async getEmployees(filters?: EmployeeFilterParams): Promise<EmployeeListResponse> {
-    console.log('[EmployeeService.getEmployees] Calling API with filters:', filters); // DEBUG
-    const response = await this.GET<any>('', filters);
-    console.log('[EmployeeService.getEmployees] Raw response from BaseApiClient:', response); // DEBUG
-    
-    // Transform backend response: { data: [...], total, page, limit } → { items: [...], total, page, limit }
-    const transformed: EmployeeListResponse = {
-      items: response.data || [],
-      total: response.total || 0,
-      page: response.page || 1,
-      limit: response.limit || 10,
-    };
-    
-    console.log('[EmployeeService.getEmployees] Transformed response:', transformed); // DEBUG
-    return transformed;
+    const response = await this.GET<EmployeeListResponse>('', filters);
+    // BaseApiClient.GET() already unwraps response.data.data, so response is the transformed data
+    return response;
   }
 
   /**
    * GET /employees/{id}
-   * Lấy chi tiết nhân viên theo ID (cấp độ cơ bản)
+   * Retrieve basic employee details by ID
    * 
    * @param id - Employee ID
-   * @returns Thông tin chi tiết của nhân viên
-   * @throws Error nếu employee không tồn tại (404)
+   * @returns Employee information
+   * @throws Error if employee does not exist (404)
    */
   async getEmployeeById(id: string): Promise<Employee> {
     return this.GET<Employee>(`/${id}`);
@@ -75,12 +66,12 @@ export class EmployeeService extends BaseApiClient {
 
   /**
    * GET /employees/{id}/detail
-   * Lấy chi tiết nhân viên mở rộng (bao gồm tất cả thông tin cá nhân, công việc)
-   * Được dùng cho trang Employee Detail
+   * Retrieve extended employee details (including personal and work information)
+   * Used for the Employee Detail page
    * 
    * @param id - Employee ID
-   * @returns EmployeeDetail mở rộng
-   * @throws Error nếu employee không tồn tại (404) hoặc 403 nếu không có quyền xem
+   * @returns Extended EmployeeDetail
+   * @throws Error if employee does not exist (404) or user lacks permission (403)
    */
   async getEmployeeDetail(id: string): Promise<EmployeeDetail> {
     // Return mock data for development
@@ -101,15 +92,15 @@ export class EmployeeService extends BaseApiClient {
 
   /**
    * POST /employees
-   * Tạo nhân viên mới
+   * Create a new employee
    * 
-   * Hệ thống sẽ:
-   * - Gửi mật khẩu tạm thời qua email
-   * - Cho phép nhân viên đối chiếu trong lần đăng nhập đầu tiên
+   * System will:
+   * - Send temporary password via email
+   * - Allow employee to reset password on first login
    * 
    * @param data - Employee data
-   * @returns Employee vừa được tạo
-   * @throws Error nếu email đã tồn tại (409)
+   * @returns Created Employee
+   * @throws Error if email already exists (409)
    */
   async createEmployee(data: CreateEmployeeRequest): Promise<Employee> {
     return this.POST<Employee>('', data);
@@ -117,12 +108,12 @@ export class EmployeeService extends BaseApiClient {
 
   /**
    * PUT /employees/{id}
-   * Cập nhật thông tin nhân viên (cấp độ cơ bản)
+   * Update employee information (basic level)
    * 
    * @param id - Employee ID
-   * @param data - Fields cần cập nhật
-   * @returns Employee sau khi cập nhật
-   * @throws Error nếu employee không tồn tại (404) hoặc email đã tồn tại (409)
+   * @param data - Fields to update
+   * @returns Updated Employee
+   * @throws Error if employee does not exist (404) or email already exists (409)
    */
   async updateEmployee(
     id: string,
@@ -133,13 +124,13 @@ export class EmployeeService extends BaseApiClient {
 
   /**
    * PUT /employees/{id}/detail
-   * Cập nhật chi tiết nhân viên mở rộng
-   * Được dùng cho form chỉnh sửa trên trang Employee Detail
+   * Update extended employee details
+   * Used for edit form on the Employee Detail page
    * 
    * @param id - Employee ID
-   * @param data - Fields cần cập nhật
-   * @returns EmployeeDetail sau khi cập nhật
-   * @throws Error nếu employee không tồn tại (404) hoặc email đã tồn tại (409)
+   * @param data - Fields to update
+   * @returns Updated EmployeeDetail
+   * @throws Error if employee does not exist (404) or email already exists (409)
    */
   async updateEmployeeDetail(
     id: string,
@@ -150,11 +141,11 @@ export class EmployeeService extends BaseApiClient {
 
   /**
    * DELETE /employees/{id}
-   * Xóa nhân viên (soft delete: set status = Resigned)
+   * Delete employee (soft delete: sets status = Resigned)
    * 
    * @param id - Employee ID
-   * @returns Phản hồi từ server (void)
-   * @throws Error nếu employee không tồn tại (404)
+   * @returns Server response (void)
+   * @throws Error if employee does not exist (404)
    */
   async deleteEmployee(id: string): Promise<void> {
     return this.DELETE<void>(`/${id}`);
@@ -168,7 +159,7 @@ export class EmployeeService extends BaseApiClient {
 
   /**
    * GET /employees/{id}/events
-   * Lấy lịch sử tham gia sự kiện của nhân viên (aggregation từ Events module)
+   * Retrieve employee event participation history (aggregation from Events module)
    * 
    * @param id - Employee ID
    * @param page - Page number (default: 1)
@@ -185,7 +176,7 @@ export class EmployeeService extends BaseApiClient {
 
   /**
    * GET /employees/{id}/attendance-summary
-   * Lấy tổng hợp chấm công theo tháng (aggregation từ Attendance module)
+   * Retrieve monthly attendance summary (aggregation from Attendance module)
    * 
    * @param id - Employee ID
    * @param year - Filter by year (default: current year)
@@ -202,7 +193,7 @@ export class EmployeeService extends BaseApiClient {
 
   /**
    * GET /employees/{id}/reviews
-   * Lấy danh sách đánh giá hiệu suất
+   * Retrieve performance review list
    * 
    * @param id - Employee ID
    * @param page - Page number (default: 1)
@@ -219,12 +210,12 @@ export class EmployeeService extends BaseApiClient {
 
   /**
    * POST /employees/{id}/reviews
-   * Tạo đánh giá hiệu suất mới
+   * Create a new performance review
    * 
    * @param id - Employee ID
    * @param data - Performance review data
-   * @returns PerformanceReview vừa được tạo
-   * @throws Error nếu employee không tồn tại (404) hoặc 403 nếu không có quyền
+   * @returns Created PerformanceReview
+   * @throws Error if employee does not exist (404) or user lacks permission (403)
    */
   async createEmployeeReview(
     id: string,
@@ -235,53 +226,28 @@ export class EmployeeService extends BaseApiClient {
 
   /**
    * PUT /performance-reviews/{reviewId}
-   * Cập nhật đánh giá hiệu suất
+   * Update a performance review
    * 
    * @param reviewId - Performance Review ID
    * @param data - Updated review data
-   * @returns PerformanceReview sau khi cập nhật
+   * @returns Updated PerformanceReview
    */
   async updatePerformanceReview(
     reviewId: string,
     data: UpdatePerformanceReviewRequest,
   ): Promise<PerformanceReview> {
-    // Create inline subclass to avoid abstract class instantiation
-    const PerformanceReviewClient = class extends BaseApiClient {
-      constructor() {
-        super('/performance-reviews');
-      }
-    };
-    const client = new PerformanceReviewClient();
-    return client.PUT<PerformanceReview>(`/${reviewId}`, data);
+    return performanceReviewService.update(reviewId, data);
   }
 
   /**
    * DELETE /performance-reviews/{reviewId}
-   * Xóa đánh giá hiệu suất (Admin only)
-   * 
+   * Delete a performance review (Admin only)
+   *
    * @param reviewId - Performance Review ID
    * @returns void
    */
   async deletePerformanceReview(reviewId: string): Promise<void> {
-    // Create inline subclass to avoid abstract class instantiation
-    const PerformanceReviewClient = class extends BaseApiClient {
-      constructor() {
-        super('/performance-reviews');
-      }
-    };
-    const client = new PerformanceReviewClient();
-    return client.DELETE<void>(`/${reviewId}`);
-  }
-
-  /**
-   * GET /employees/{id}/stats
-   * Lấy thống kê tổng hợp của nhân viên
-   * 
-   * @param id - Employee ID
-   * @returns EmployeeStats bao gồm: totalEvents, averageRating, etc.
-   */
-  async getEmployeeStats(id: string): Promise<EmployeeStats> {
-    // Return mock stats for development
+    // MOCK: Mock data for development - replace with actual API call
     const mockStats: EmployeeStats = {
       totalEvents: 24,
       averageRating: 4.8,
@@ -305,7 +271,7 @@ export class EmployeeService extends BaseApiClient {
 
   /**
    * GET /activities
-   * Lấy danh sách ghi chú nội bộ của nhân viên
+   * Retrieve list of internal notes for employee
    * 
    * @param employeeId - Employee ID
    * @param page - Page number (default: 1)
@@ -317,13 +283,7 @@ export class EmployeeService extends BaseApiClient {
     page: number = 1,
     limit: number = 10,
   ): Promise<{ data: Activity[] }> {
-    const ActivityClient = class extends BaseApiClient {
-      constructor() {
-        super('/activities');
-      }
-    };
-    const activityClient = new ActivityClient();
-    return activityClient.GET<{ data: Activity[] }>('', {
+    return activityService.getActivities({
       targetType: 'Employee',
       targetId: employeeId,
       page,
@@ -333,57 +293,39 @@ export class EmployeeService extends BaseApiClient {
 
   /**
    * POST /activities
-   * Tạo ghi chú nội bộ mới
+   * Create a new internal note
    * 
    * @param data - Activity/Note data (targetType='Employee', type='Note')
-   * @returns Activity vừa được tạo
+   * @returns Created Activity
    */
   async createEmployeeNote(data: CreateActivityRequest): Promise<Activity> {
-    const ActivityClient = class extends BaseApiClient {
-      constructor() {
-        super('/activities');
-      }
-    };
-    const activityClient = new ActivityClient();
-    return activityClient.POST<Activity>('', data);
+    return activityService.create(data);
   }
 
   /**
    * PUT /activities/{activityId}
-   * Cập nhật ghi chú nội bộ
+   * Update an internal note
    * 
    * @param activityId - Activity ID
    * @param data - Updated activity data
-   * @returns Activity sau khi cập nhật
+   * @returns Updated Activity
    */
   async updateEmployeeNote(
     activityId: string,
     data: Partial<CreateActivityRequest>,
   ): Promise<Activity> {
-    const ActivityClient = class extends BaseApiClient {
-      constructor() {
-        super('/activities');
-      }
-    };
-    const activityClient = new ActivityClient();
-    return activityClient.PUT<Activity>(`/${activityId}`, data);
+    return activityService.update(activityId, data);
   }
 
   /**
    * DELETE /activities/{activityId}
-   * Xóa ghi chú nội bộ (soft delete)
+   * Delete an internal note (soft delete)
    * 
    * @param activityId - Activity ID
    * @returns void
    */
   async deleteEmployeeNote(activityId: string): Promise<void> {
-    const ActivityClient = class extends BaseApiClient {
-      constructor() {
-        super('/activities');
-      }
-    };
-    const activityClient = new ActivityClient();
-    return activityClient.DELETE<void>(`/${activityId}`);
+    return activityService.delete(activityId);
   }
 
   /**
@@ -393,52 +335,57 @@ export class EmployeeService extends BaseApiClient {
    */
 
   /**
-   * GET /employees/roles (mocked)
-   * Lấy danh sách các vai trò có sẵn
+   * GET /employees/roles
+   * Retrieve list of available roles
    * 
-   * @returns Mảng các vai trò (Admin, Manager, Staff, etc.)
+   * @returns Array of roles (Admin, Manager, Staff, etc.)
+   * @note MOCK: Returns mock data. Replace with API call when backend endpoint is ready.
    */
   async getRoles(): Promise<PositionListResponse> {
-    // TODO: Replace with API call when backend is ready
+    // MOCK: Mock data for development - replace with actual API call
     return new Promise((resolve) => {
       setTimeout(() => resolve(MOCK_ROLES), 300);
     });
   }
 
   /**
-   * GET /employees/positions (mocked) - Deprecated, use getRoles() instead
-   * Lấy danh sách các vị trí có sẵn
+   * GET /employees/positions
+   * Retrieve list of available positions
    * 
-   * @returns Mảng các vị trí (Manager, Director, etc.)
+   * @returns Array of positions (Manager, Director, etc.)
+   * @deprecated Use getRoles() instead
+   * @note MOCK: Returns mock data. Replace with API call when backend endpoint is ready.
    */
   async getPositions(): Promise<PositionListResponse> {
-    // TODO: Replace with API call when backend is ready
+    // MOCK: Mock data for development - replace with actual API call
     return new Promise((resolve) => {
       setTimeout(() => resolve(MOCK_POSITIONS), 300);
     });
   }
 
   /**
-   * GET /employees/departments (mocked)
-   * Lấy danh sách các phòng ban có sẵn
+   * GET /employees/departments
+   * Retrieve list of available departments
    * 
-   * @returns Mảng các phòng ban (HR, Sales, etc.)
+   * @returns Array of departments (HR, Sales, etc.)
+   * @note MOCK: Returns mock data. Replace with API call when backend endpoint is ready.
    */
   async getDepartments(): Promise<DepartmentListResponse> {
-    // TODO: Replace with API call when backend is ready
+    // MOCK: Mock data for development - replace with actual API call
     return new Promise((resolve) => {
       setTimeout(() => resolve(MOCK_DEPARTMENTS), 300);
     });
   }
 
   /**
-   * GET /employees/statuses (mocked)
-   * Lấy danh sách các trạng thái nhân viên
+   * GET /employees/statuses
+   * Retrieve list of available employee statuses
    * 
-   * @returns Mảng các trạng thái (Active, Resigned, OnLeave, Probation)
+   * @returns Array of statuses (Active, Resigned, OnLeave, Probation)
+   * @note MOCK: Returns mock data. Replace with API call when backend endpoint is ready.
    */
   async getStatuses(): Promise<StatusListResponse> {
-    // TODO: Replace with API call when backend is ready
+    // MOCK: Mock data for development - replace with actual API call
     return new Promise((resolve) => {
       setTimeout(() => resolve(MOCK_STATUSES), 300);
     });
@@ -447,6 +394,6 @@ export class EmployeeService extends BaseApiClient {
 
 /**
  * Singleton instance
- * Sử dụng trong hooks & components
+ * Used in hooks & components
  */
 export const employeeService = new EmployeeService();

@@ -50,32 +50,23 @@ export const useEmployees = (filters: EmployeeFilterParams = {}) => {
     search: filters.search && filters.search.length >= 2 ? filters.search : undefined,
   };
 
-  console.log('[useEmployees] Requesting with filters:', cleanFilters); // DEBUG
-
   return useQuery({
     queryKey: EMPLOYEES_QUERY_KEYS.list(cleanFilters),
     queryFn: async () => {
       const response = await employeeService.getEmployees(cleanFilters);
-      console.log('[useEmployees] API Response (FULL):', JSON.stringify(response, null, 2)); // DEBUG
-      console.log('[useEmployees] Response type:', typeof response); // DEBUG
-      console.log('[useEmployees] Is array?', Array.isArray(response)); // DEBUG
-      console.log('[useEmployees] Response keys:', Object.keys(response || {})); // DEBUG
-      console.log('[useEmployees] Items:', response?.items); // DEBUG
-      console.log('[useEmployees] Items count:', response?.items?.length); // DEBUG
-      console.log('[useEmployees] Total:', response?.total); // DEBUG
       return response;
     },
-    staleTime: 5 * 60 * 1000, // 5 phút
-    gcTime: 10 * 60 * 1000, // 10 phút (formerly cacheTime)
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
   });
 };
 
 /**
  * useEmployeeDetail
- * Lấy chi tiết nhân viên theo ID
+ * Retrieve employee details by ID
  * 
  * @param id - Employee ID
- * @param enabled - Cho phép query chỉ khi enabled = true
+ * @param enabled - Allow query only when enabled = true
  * @returns Query result
  * 
  * @example
@@ -88,7 +79,7 @@ export const useEmployeeDetail = (id: string, enabled: boolean = true) => {
     queryKey: EMPLOYEES_QUERY_KEYS.detail(id),
     queryFn: () => employeeService.getEmployeeById(id),
     enabled: !!id && enabled,
-    staleTime: 10 * 60 * 1000, // 10 phút
+    staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000,
   });
 };
@@ -183,21 +174,21 @@ export const useCreateEmployee = () => {
     mutationFn: (data: CreateEmployeeRequest) =>
       employeeService.createEmployee(data),
     onSuccess: (newEmployee) => {
-      // Invalidate danh sách để refetch
+      // Invalidate list to refetch
       queryClient.invalidateQueries({
         queryKey: EMPLOYEES_QUERY_KEYS.lists(),
       });
 
-      // Thêm employee vào cache (optional, tối ưu hóa)
+      // Add employee to cache (optional, optimization)
       queryClient.setQueryData(
         EMPLOYEES_QUERY_KEYS.detail(newEmployee.id),
         newEmployee,
       );
 
-      // Toast thông báo
+      // Show success notification
       toast({
-        title: 'Thành công',
-        description: `Nhân viên ${newEmployee.name} đã được tạo. Mật khẩu tạm thời được gửi qua email.`,
+        title: 'Success',
+        description: `Employee ${newEmployee.name} has been created. Temporary password sent to email.`,
       });
     },
     onError: (error: any) => {
@@ -205,11 +196,11 @@ export const useCreateEmployee = () => {
 
       const message =
         error?.message || error?.code === '409'
-          ? 'Email này đã tồn tại'
-          : 'Không thể tạo nhân viên. Vui lòng thử lại.';
+          ? 'Email already exists'
+          : 'Unable to create employee. Please try again.';
 
       toast({
-        title: 'Lỗi',
+        title: 'Error',
         description: message,
         variant: 'destructive',
       });

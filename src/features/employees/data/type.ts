@@ -55,12 +55,12 @@ export interface EmployeeListResponse extends PaginatedResponse<Employee> {
 }
 
 /**
- * Filter params cho GET /employees
+ * Filter params for GET /employees
  */
 export interface EmployeeFilterParams {
   page?: number;
   limit?: number;
-  search?: string; // Tìm theo tên hoặc nhân viên (2+ ký tự)
+  search?: string; // Search by name or employee code (2+ characters)
   department?: string;
   position?: string;
   status?: string;

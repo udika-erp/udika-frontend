@@ -204,31 +204,6 @@ export const useEmployeeNotes = (
 };
 
 /**
- * useEmployeeStats
- * Fetch aggregated employee statistics
- * Used for Employee Detail page - Summary cards & Stats section
- *
- * @param id - Employee ID
- * @param enabled - Conditionally enable query
- * @returns Query result with EmployeeStats or error
- *
- * @example
- * ```tsx
- * const { data: stats } = useEmployeeStats(employeeId);
- * // stats.totalEvents, stats.averageRating, stats.performanceRate, ...
- * ```
- */
-export const useEmployeeStats = (id: string, enabled: boolean = true) => {
-  return useQuery({
-    queryKey: EMPLOYEE_DETAIL_QUERY_KEYS.stats(id),
-    queryFn: () => employeeService.getEmployeeStats(id),
-    enabled: !!id && enabled,
-    staleTime: 10 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
-  });
-};
-
-/**
  * ============================
  * MUTATION HOOKS - EMPLOYEE DETAIL UPDATES
  * ============================

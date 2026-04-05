@@ -13,7 +13,6 @@ import {
 import { FormDialog } from '@/components/modal';
 import {
   useEmployeeDetailPage,
-  useEmployeeStats,
   useEmployeeWorkHistory,
   useEmployeeAttendance,
   useEmployeeReviews,
@@ -21,10 +20,8 @@ import {
 } from '@/features/employees/hooks';
 import { useDeleteEmployee } from '@/features/employees/hooks';
 import { EmployeeForm } from '@/features/employees/components/EmployeeForm';
-import { EmployeeSummaryCard } from '@/features/employees/components/EmployeeSummaryCard';
 import { PersonalInfoSection } from '@/features/employees/components/PersonalInfoSection';
 import { WorkInfoSection } from '@/features/employees/components/WorkInfoSection';
-import { PerformanceSummarySection } from '@/features/employees/components/PerformanceSummarySection';
 import { EventParticipationList } from '@/features/employees/components/EventParticipationList';
 import { AttendanceSummaryList } from '@/features/employees/components/AttendanceSummaryList';
 import { PerformanceReviewList } from '@/features/employees/components/PerformanceReviewList';
@@ -40,7 +37,6 @@ export function EmployeeDetail() {
 
   // Queries
   const employeeQuery = useEmployeeDetailPage(id || '', activeTab === 'overview');
-  const statsQuery = useEmployeeStats(id || '', activeTab === 'overview');
   const workHistoryQuery = useEmployeeWorkHistory(id || '', 1, 10, activeTab === 'history');
   const attendanceQuery = useEmployeeAttendance(id || '', undefined, activeTab === 'attendance');
   const reviewsQuery = useEmployeeReviews(id || '', 1, 10, activeTab === 'reviews');
@@ -50,7 +46,6 @@ export function EmployeeDetail() {
   const { mutate: deleteEmployee } = useDeleteEmployee();
 
   const employee = employeeQuery.data;
-  const stats = statsQuery.data;
   const isLoading = employeeQuery.isLoading || !id;
   const isError = employeeQuery.isError;
 
@@ -161,14 +156,7 @@ export function EmployeeDetail() {
         </div>
       </div>
 
-      {/* Summary Card */}
-      {stats && (
-        <EmployeeSummaryCard
-          employee={employee}
-          stats={stats}
-          isLoading={statsQuery.isLoading}
-        />
-      )}
+      {/* Summary Card - TODO: waiting for get employeeStats API endpoint */}
 
       {/* Tabs */}
       <Tabs
@@ -191,9 +179,7 @@ export function EmployeeDetail() {
             <PersonalInfoSection employee={employee} isLoading={employeeQuery.isLoading} />
             <WorkInfoSection employee={employee} isLoading={employeeQuery.isLoading} />
           </div>
-          {stats && (
-            <PerformanceSummarySection stats={stats} isLoading={statsQuery.isLoading} />
-          )}
+          {/* TODO: PerformanceSummarySection waiting for get employeeStats API endpoint */}
         </TabsContent>
 
         {/* Tab: Work History */}

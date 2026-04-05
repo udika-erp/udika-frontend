@@ -16,7 +16,6 @@ export {
   useEmployeeAttendance,
   useEmployeeReviews,
   useEmployeeNotes,
-  useEmployeeStats,
   useUpdateEmployeeDetail,
   useCreatePerformanceReview,
   useUpdatePerformanceReview,

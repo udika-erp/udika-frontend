@@ -94,6 +94,21 @@ export const useEmployeeDetail = (id: string, enabled: boolean = true) => {
 };
 
 /**
+ * useEmployeeRoles
+ * Lấy danh sách các vai trò có sẵn
+ * 
+ * @returns List of roles
+ */
+export const useEmployeeRoles = () => {
+  return useQuery({
+    queryKey: EMPLOYEES_QUERY_KEYS.positions(),
+    queryFn: () => employeeService.getRoles(),
+    staleTime: 1 * 60 * 60 * 1000, // 1 giờ (static data)
+    gcTime: 2 * 60 * 60 * 1000, // 2 giờ
+  });
+};
+
+/**
  * useEmployeePositions
  * Lấy danh sách các vị trí có sẵn
  * 

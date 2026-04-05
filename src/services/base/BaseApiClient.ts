@@ -9,7 +9,7 @@ export abstract class BaseApiClient {
   }
 
   // Unwrap backend response: { success, data, message } → returns data
-  protected async GET<T>(url: string, params?: object): Promise<T> {
+  public async GET<T>(url: string, params?: object): Promise<T> {
     console.log(`[BaseApiClient.GET] ${this.baseUrl}${url} with params:`, params); // DEBUG
     const response = await api.get<ApiResponse<T>>(this.baseUrl + url, { params });
     console.log(`[BaseApiClient.GET] Full response:`, response.data); // DEBUG
@@ -17,17 +17,17 @@ export abstract class BaseApiClient {
     return response.data.data;
   }
 
-  protected async POST<T>(url: string, data?: object): Promise<T> {
+  public async POST<T>(url: string, data?: object): Promise<T> {
     const response = await api.post<ApiResponse<T>>(this.baseUrl + url, data);
     return response.data.data;
   }
 
-  protected async PUT<T>(url: string, data?: object): Promise<T> {
+  public async PUT<T>(url: string, data?: object): Promise<T> {
     const response = await api.put<ApiResponse<T>>(this.baseUrl + url, data);
     return response.data.data;
   }
 
-  protected async DELETE<T>(url: string): Promise<T> {
+  public async DELETE<T>(url: string): Promise<T> {
     const response = await api.delete<ApiResponse<T>>(this.baseUrl + url);
     return response.data.data;
   }

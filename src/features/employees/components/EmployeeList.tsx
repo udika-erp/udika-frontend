@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Search, Plus, Eye, Edit, Trash2, ChevronLeft, ChevronRight, AlertCircle, Loader } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +38,13 @@ import type { EmployeeFilterParams } from '../data/type';
 import type { EmployeeFormValues } from '../forms/employee.schema';
 
 export function EmployeeList() {
+  let navigate;
+  try {
+    navigate = useNavigate();
+  } catch {
+    navigate = null;
+  }
+  
   // ==================== State ====================
   const [addOpen, setAddOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -76,11 +84,13 @@ export function EmployeeList() {
     }));
   };
 
-  const handlePageChange = (page: number) => {
-    setFilters((prev) => ({
-      ...prev,
-      page,
-    }));
+  const handlePageChange = (page: string | undefined) => {
+    if (page) {
+      setFilters((prev) => ({
+        ...prev,
+        page: parseInt(page, 10),
+      }));
+    }
   };
 
   const handleDeleteConfirm = (id: string) => {
@@ -190,7 +200,7 @@ export function EmployeeList() {
           </SelectContent>
         </Select>
 
-        <Select value={filters.joinYear?.toString() || ''} onValueChange={(v) => handleFilterChange('joinYear', v ? parseInt(v, 10) : undefined)}>
+        <Select value={filters.joinYear?.toString() || ''} onValueChange={(v) => handleFilterChange('joinYear', v || undefined)}>
           <SelectTrigger className="h-10">
             <SelectValue placeholder="Năm vào làm" />
           </SelectTrigger>
@@ -299,11 +309,22 @@ export function EmployeeList() {
                         {STATUS_LABELS[employee.status] || employee.status}
                       </Badge>
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-4 flex gap-1 items-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 hover:bg-gray-100"
+                        title="Xem chi tiết"
+                        onClick={() => {
+                          if (navigate) navigate(`/employees/${employee.id}`);
+                        }}
+                      >
+                        <Eye className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                      </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <Eye className="w-4 h-4 text-gray-500" />
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Tùy chọn">
+                            <Edit className="w-4 h-4 text-gray-500" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -338,7 +359,7 @@ export function EmployeeList() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+              onClick={() => handlePageChange((Math.max(1, currentPage - 1)).toString())}
               disabled={currentPage === 1}
             >
               <ChevronLeft className="w-4 h-4" />
@@ -351,7 +372,7 @@ export function EmployeeList() {
                   variant={page === currentPage ? 'default' : 'outline'}
                   size="sm"
                   className={page === currentPage ? 'bg-[#2563EB] hover:bg-[#1d4ed8]' : ''}
-                  onClick={() => handlePageChange(page)}
+                  onClick={() => handlePageChange(page.toString())}
                 >
                   {page}
                 </Button>
@@ -359,7 +380,7 @@ export function EmployeeList() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+              onClick={() => handlePageChange((Math.min(totalPages, currentPage + 1)).toString())}
               disabled={currentPage === totalPages}
             >
               <ChevronRight className="w-4 h-4" />

@@ -23,7 +23,7 @@ import {
   useUpdateEmployee,
   useEmployeeDetail,
   useEmployeeDepartments,
-  useEmployeePositions,
+  useEmployeeRoles,
 } from '../hooks';
 import { employeeSchema, type EmployeeFormValues } from '../forms/employee.schema';
 
@@ -44,8 +44,8 @@ export function EmployeeForm({
       name: '',
       phone: '',
       email: '',
-      position: '',
-      department: 'Sales',
+      role: undefined,
+      department: 'Board',
       joinDate: '',
     },
   });
@@ -56,7 +56,7 @@ export function EmployeeForm({
     !!employeeId
   );
   const { data: departments } = useEmployeeDepartments();
-  const { data: positions } = useEmployeePositions();
+  const { data: roles } = useEmployeeRoles();
 
   // ==================== Mutations ====================
   const { mutate: createEmployee, isPending: isCreating } = useCreateEmployee();
@@ -72,8 +72,8 @@ export function EmployeeForm({
         name: employee.name || '',
         phone: employee.phone || '',
         email: employee.email || '',
-        position: employee.position || '',
-        department: (employee.department as any) || 'Sales',
+        role: (employee.role as any) || 'Staff',
+        department: (employee.department as any) || 'HR',
         joinDate: employee.joinDate || '',
       });
     }
@@ -154,20 +154,20 @@ export function EmployeeForm({
 
         <FormField
           control={form.control}
-          name="position"
+          name="role"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Chức vụ *</FormLabel>
+              <FormLabel>Vai trò *</FormLabel>
               <Select value={field.value} onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn chức vụ" />
+                    <SelectValue placeholder="Chọn vai trò" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {positions?.map((pos) => (
-                    <SelectItem key={pos.value} value={pos.value}>
-                      {pos.label}
+                  {roles?.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -177,45 +177,44 @@ export function EmployeeForm({
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="department"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phòng ban *</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn phòng ban" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {departments?.map((dept) => (
-                      <SelectItem key={dept.value} value={dept.value}>
-                        {dept.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="joinDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ngày vào làm *</FormLabel>
+        <FormField
+          control={form.control}
+          name="department"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Phòng ban *</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn phòng ban" />
+                  </SelectTrigger>
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+                <SelectContent>
+                  {departments?.map((dept) => (
+                    <SelectItem key={dept.value} value={dept.value}>
+                      {dept.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="joinDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Ngày vào làm *</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>

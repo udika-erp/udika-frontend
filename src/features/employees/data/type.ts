@@ -7,13 +7,15 @@ import type { PaginatedResponse } from '@/services/api.types';
 
 /**
  * Create Employee Request
- * Để tạo nhân viên mới (no auth required ở phase này)
+ * Để tạo nhân viên mới
  */
 export interface CreateEmployeeRequest {
   name: string;
   email: string;
-  position: 'Director' | 'Manager' | 'Supervisor' | 'Employee' | 'Intern';
+  phone: string;
+  role: 'SuperAdmin' | 'Admin' | 'HR' | 'Manager' | 'Staff';
   department: 'Board' | 'HR' | 'Sales' | 'Marketing' | 'Event' | 'Accounting' | 'Admin';
+  joinDate: string; // ISO date format
   dateOfBirth?: string; // ISO date format
   address?: string;
   avatar?: string; // URL
@@ -27,7 +29,7 @@ export interface CreateEmployeeRequest {
 export interface UpdateEmployeeRequest {
   name?: string;
   email?: string;
-  position?: 'Director' | 'Manager' | 'Supervisor' | 'Employee' | 'Intern';
+  role?: 'SuperAdmin' | 'Admin' | 'HR' | 'Manager' | 'Staff';
   department?: 'Board' | 'HR' | 'Sales' | 'Marketing' | 'Event' | 'Accounting' | 'Admin';
   dateOfBirth?: string;
   address?: string;

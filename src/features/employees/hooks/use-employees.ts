@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
 import { employeeService } from '../service/employee.service';
 import type {
   CreateEmployeeRequest,
@@ -18,6 +19,7 @@ const EMPLOYEES_QUERY_KEYS = {
     [...EMPLOYEES_QUERY_KEYS.lists(), filters] as const,
   details: () => [...EMPLOYEES_QUERY_KEYS.all, 'detail'] as const,
   detail: (id: string) => [...EMPLOYEES_QUERY_KEYS.details(), id] as const,
+  roles: () => [...EMPLOYEES_QUERY_KEYS.all, 'roles'] as const,
   positions: () => [...EMPLOYEES_QUERY_KEYS.all, 'positions'] as const,
   departments: () => [...EMPLOYEES_QUERY_KEYS.all, 'departments'] as const,
   statuses: () => [...EMPLOYEES_QUERY_KEYS.all, 'statuses'] as const,
@@ -93,7 +95,7 @@ export const useEmployeeDetail = (id: string, enabled: boolean = true) => {
  */
 export const useEmployeeRoles = () => {
   return useQuery({
-    queryKey: EMPLOYEES_QUERY_KEYS.positions(),
+    queryKey: EMPLOYEES_QUERY_KEYS.roles(),
     queryFn: () => employeeService.getRoles(),
     staleTime: 1 * 60 * 60 * 1000, // 1 giờ (static data)
     gcTime: 2 * 60 * 60 * 1000, // 2 giờ
@@ -188,18 +190,18 @@ export const useCreateEmployee = () => {
 
       // Show success notification
       toast({
-        title: 'Success',
-        description: `Employee ${newEmployee.name} has been created. Temporary password sent to email.`,
+        title: 'Thành công',
+        description: 'Nhân viên đã được tạo. Mật khẩu tạm thời đã được gửi vào email.',
       });
     },
     onError: (error: NormalizedError) => {
       const message =
-        error?.message || error?.code === '409'
-          ? 'Email already exists'
-          : 'Unable to create employee. Please try again.';
+        error?.code === '409'
+          ? 'Email đã tồn tại'
+          : error?.message || 'Không thể tạo nhân viên. Vui lòng thử lại.';
 
       toast({
-        title: 'Error',
+        title: 'Lỗi',
         description: message,
         variant: 'destructive',
       });
@@ -294,6 +296,7 @@ export const useUpdateEmployee = () => {
 export const useDeleteEmployee = () => {
   const queryClient = useQueryClient();
   const { toast } = useAppToast();
+  const navigate = useNavigate();
 
   return useMutation({
     mutationFn: (id: string) => employeeService.deleteEmployee(id),
@@ -312,6 +315,9 @@ export const useDeleteEmployee = () => {
         title: 'Thành công',
         description: 'Nhân viên đã được xóa.',
       });
+      
+      // Navigation sang danh sách
+      navigate('/employees');
     },
     onError: (error: NormalizedError) => {
       const message =

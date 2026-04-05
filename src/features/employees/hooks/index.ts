@@ -11,7 +11,7 @@ export {
 } from './use-employees';
 
 export {
-  useEmployeeDetail as useEmployeeDetailPage,
+  useEmployeeDetail as useEmployeeFullDetail,
   useEmployeeWorkHistory,
   useEmployeeAttendance,
   useEmployeeReviews,

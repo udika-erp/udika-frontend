@@ -2,7 +2,7 @@ import { BaseApiClient } from '@/services/base/BaseApiClient';
 import { performanceReviewService } from './performance-review.service';
 import { activityService } from './activity.service';
 import { MOCK_ROLES, MOCK_POSITIONS, MOCK_DEPARTMENTS, MOCK_STATUSES } from '@/services/mocks/employee-options';
-import { MOCK_EMPLOYEE_DETAILS } from '../types';
+import { MOCK_EMPLOYEE_DETAILS } from '../mocks/employee-data';
 import type { Employee } from '@/features/auth/data/type';
 import type {
   CreateEmployeeRequest,

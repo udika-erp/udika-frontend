@@ -11,8 +11,13 @@ export const MOCK_ROLES = [
   { value: 'Staff', label: 'Nhân viên' },
 ];
 
-// Keep for backward compatibility if needed
-export const MOCK_POSITIONS = MOCK_ROLES;
+export const MOCK_POSITIONS = [
+  { value: 'Director', label: 'Giám đốc' },
+  { value: 'Manager', label: 'Trưởng phòng' },
+  { value: 'Supervisor', label: 'Giám sát' },
+  { value: 'Employee', label: 'Nhân viên' },
+  { value: 'Intern', label: 'Thực tập sinh' },
+];
 
 export const MOCK_DEPARTMENTS = [
   { value: 'Board', label: 'Board' },

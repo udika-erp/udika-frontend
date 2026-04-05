@@ -79,11 +79,11 @@ export function EmployeeList() {
     }));
   };
 
-  const handlePageChange = (page: string | undefined) => {
+  const handlePageChange = (page: number) => {
     if (page) {
       setFilters((prev) => ({
         ...prev,
-        page: parseInt(page, 10),
+        page,
       }));
     }
   };

@@ -11,8 +11,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { FormDialog } from '@/components/modal';
+import { useAppToast } from '@/hooks/use-app-toast';
 import {
-  useEmployeeDetailPage,
+  useEmployeeFullDetail,
   useEmployeeWorkHistory,
   useEmployeeAttendance,
   useEmployeeReviews,
@@ -30,13 +31,14 @@ import { EmployeeNoteList } from '@/features/employees/components/EmployeeNoteLi
 export function EmployeeDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useAppToast();
   const [activeTab, setActiveTab] = React.useState<'overview' | 'history' | 'attendance' | 'reviews' | 'notes'>(
     'overview',
   );
   const [editModalOpen, setEditModalOpen] = React.useState(false);
 
   // Queries
-  const employeeQuery = useEmployeeDetailPage(id || '', activeTab === 'overview');
+  const employeeQuery = useEmployeeFullDetail(id || '', activeTab === 'overview');
   const workHistoryQuery = useEmployeeWorkHistory(id || '', 1, 10, activeTab === 'history');
   const attendanceQuery = useEmployeeAttendance(id || '', undefined, activeTab === 'attendance');
   const reviewsQuery = useEmployeeReviews(id || '', 1, 10, activeTab === 'reviews');
@@ -87,10 +89,7 @@ export function EmployeeDetail() {
   const handleDeleteEmployee = () => {
     if (confirm('Bạn chắc chắn muốn xóa nhân viên này? Hành động này không thể hoàn tác.')) {
       deleteEmployee(employee.id);
-      // Navigation sẽ được xử lý bởi hook toast + refetch
-      setTimeout(() => {
-        navigate('/employees');
-      }, 1500);
+      // Navigation được xử lý bởi hook mutation onSuccess
     }
   };
 
@@ -123,8 +122,7 @@ export function EmployeeDetail() {
             size="sm"
             className="gap-2"
             onClick={() => {
-              // TODO: Implement messaging feature
-              console.log('Open messaging for', employee.email);
+              toast.info('Tính năng nhắn tin đang được phát triển');
             }}
           >
             <MessageCircle className="h-4 w-4" />

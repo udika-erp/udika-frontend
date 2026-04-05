@@ -13,6 +13,7 @@ export interface CreateEmployeeRequest {
   name: string;
   email: string;
   phone: string;
+  position: 'Director' | 'Manager' | 'Supervisor' | 'Employee' | 'Intern';
   role: 'SuperAdmin' | 'Admin' | 'HR' | 'Manager' | 'Staff';
   department: 'Board' | 'HR' | 'Sales' | 'Marketing' | 'Event' | 'Accounting' | 'Admin';
   joinDate: string; // ISO date format
@@ -29,6 +30,7 @@ export interface CreateEmployeeRequest {
 export interface UpdateEmployeeRequest {
   name?: string;
   email?: string;
+  position?: 'Director' | 'Manager' | 'Supervisor' | 'Employee' | 'Intern';
   role?: 'SuperAdmin' | 'Admin' | 'HR' | 'Manager' | 'Staff';
   department?: 'Board' | 'HR' | 'Sales' | 'Marketing' | 'Event' | 'Accounting' | 'Admin';
   dateOfBirth?: string;

@@ -10,6 +10,7 @@ import type {
   UpdatePerformanceReviewRequest,
   CreateActivityRequest,
 } from '../types';
+import type { NormalizedError } from '@/lib/error-types';
 import { useAppToast } from '@/hooks/use-app-toast';
 
 /**
@@ -285,7 +286,7 @@ export const useUpdateEmployeeDetail = () => {
         description: `Thông tin nhân viên ${updatedEmployee.name} đã được cập nhật.`,
       });
     },
-    onError: (error: any) => {
+    onError: (error: NormalizedError) => {
       const message =
         error?.code === '404'
           ? 'Nhân viên không tồn tại'
@@ -354,7 +355,7 @@ export const useCreatePerformanceReview = () => {
         description: `Đánh giá kỳ ${review.period} đã được tạo.`,
       });
     },
-    onError: (error: any) => {
+    onError: (error: NormalizedError) => {
       const message =
         error?.code === '403'
           ? 'Bạn không có quyền tạo đánh giá'
@@ -405,7 +406,7 @@ export const useUpdatePerformanceReview = () => {
         description: `Đánh giá đã được cập nhật.`,
       });
     },
-    onError: (error: any) => {
+    onError: (error: NormalizedError) => {
       toast({
         title: 'Lỗi',
         description: error?.message || 'Không thể cập nhật đánh giá. Vui lòng thử lại.',
@@ -441,7 +442,7 @@ export const useDeletePerformanceReview = () => {
         description: 'Đánh giá đã được xóa.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: NormalizedError) => {
       toast({
         title: 'Lỗi',
         description: error?.message || 'Không thể xóa đánh giá. Vui lòng thử lại.',
@@ -499,7 +500,7 @@ export const useCreateEmployeeNote = () => {
         description: 'Ghi chú đã được tạo.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: NormalizedError) => {
       toast({
         title: 'Lỗi',
         description: error?.message || 'Không thể tạo ghi chú. Vui lòng thử lại.',
@@ -537,7 +538,7 @@ export const useUpdateEmployeeNote = () => {
         description: 'Ghi chú đã được cập nhật.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: NormalizedError) => {
       toast({
         title: 'Lỗi',
         description: error?.message || 'Không thể cập nhật ghi chú. Vui lòng thử lại.',
@@ -570,7 +571,7 @@ export const useDeleteEmployeeNote = () => {
         description: 'Ghi chú đã được xóa.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: NormalizedError) => {
       toast({
         title: 'Lỗi',
         description: error?.message || 'Không thể xóa ghi chú. Vui lòng thử lại.',

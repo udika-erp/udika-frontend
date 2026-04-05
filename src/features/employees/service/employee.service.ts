@@ -16,7 +16,6 @@ import type {
 import type {
   EmployeeDetail,
   PerformanceReview,
-  EmployeeStats,
   Activity,
   UpdateEmployeeDetailRequest,
   CreatePerformanceReviewRequest,
@@ -247,25 +246,13 @@ export class EmployeeService extends BaseApiClient {
    * @returns void
    */
   async deletePerformanceReview(reviewId: string): Promise<void> {
-    // MOCK: Mock data for development - replace with actual API call
-    const mockStats: EmployeeStats = {
-      totalEvents: 24,
-      averageRating: 4.8,
-      performanceRate: 98,
-      totalEventsCompleted: 24,
-      kpiAchievementRate: 95,
-      attendanceRate: 98,
-    };
-    
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return mockStats;
+    return performanceReviewService.delete(reviewId);
   }
 
   /**
    * ============================
-   * ACTIVITIES (NOTES) - reuse từ CRM
-   * Sử dụng targetType='Employee' để lọc ghi chú của nhân viên
+   * ACTIVITIES (NOTES) - Reused from CRM
+   * Uses targetType='Employee' to filter employee notes
    * ============================
    */
 

@@ -5,6 +5,7 @@ import type {
   UpdateEmployeeRequest,
   EmployeeFilterParams,
 } from '../data/type';
+import type { NormalizedError } from '@/lib/error-types';
 import { useAppToast } from '@/hooks/use-app-toast';
 
 /**
@@ -191,9 +192,7 @@ export const useCreateEmployee = () => {
         description: `Employee ${newEmployee.name} has been created. Temporary password sent to email.`,
       });
     },
-    onError: (error: any) => {
-      console.error('Create employee error:', error);
-
+    onError: (error: NormalizedError) => {
       const message =
         error?.message || error?.code === '409'
           ? 'Email already exists'
@@ -255,9 +254,7 @@ export const useUpdateEmployee = () => {
         description: `Nhân viên ${updatedEmployee.name} đã được cập nhật.`,
       });
     },
-    onError: (error: any) => {
-      console.error('Update employee error:', error);
-
+    onError: (error: NormalizedError) => {
       const message =
         error?.code === '404'
           ? 'Nhân viên không tồn tại'
@@ -316,9 +313,7 @@ export const useDeleteEmployee = () => {
         description: 'Nhân viên đã được xóa.',
       });
     },
-    onError: (error: any) => {
-      console.error('Delete employee error:', error);
-
+    onError: (error: NormalizedError) => {
       const message =
         error?.code === '404'
           ? 'Nhân viên không tồn tại'

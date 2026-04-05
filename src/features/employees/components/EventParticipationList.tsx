@@ -13,10 +13,10 @@ function EventParticipationCard({ participation }: { participation: EventPartici
       Cancelled: 'destructive',
     };
     const labels: Record<string, string> = {
-      Planned: 'Lên kế hoạch',
-      InProgress: 'Đang diễn ra',
-      Completed: 'Hoàn thành',
-      Cancelled: 'Hủy',
+      Planned: 'Planned',
+      InProgress: 'In Progress',
+      Completed: 'Completed',
+      Cancelled: 'Cancelled',
     };
     return { variant: variants[status] || 'outline', label: labels[status] || status };
   };
@@ -30,14 +30,14 @@ function EventParticipationCard({ participation }: { participation: EventPartici
           <h4 className="font-semibold">{participation.eventName}</h4>
           <p className="text-sm text-gray-600">{participation.eventCode}</p>
           <p className="mt-2 text-sm">
-            <span className="font-medium">Vai trò:</span> {participation.role}
+            <span className="font-medium">Role:</span> {participation.role}
           </p>
           <p className="text-sm text-gray-600">
-            <span className="font-medium">Ngày:</span> {participation.eventDate}
+            <span className="font-medium">Date:</span> {participation.eventDate}
           </p>
         </div>
         <div className="flex flex-col items-end gap-3">
-          <Badge variant={statusBadge.variant as any}>{statusBadge.label}</Badge>
+          <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
           {participation.rating ? (
             <div className="flex items-center gap-1">
               {Array(5)
@@ -54,7 +54,7 @@ function EventParticipationCard({ participation }: { participation: EventPartici
                 ))}
             </div>
           ) : (
-            <span className="text-xs text-gray-500">Chưa đánh giá</span>
+            <span className="text-xs text-gray-500">Not rated</span>
           )}
         </div>
       </div>

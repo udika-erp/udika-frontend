@@ -1,6 +1,15 @@
 import { BaseApiClient } from '@/services/base/BaseApiClient';
 import type { Activity, CreateActivityRequest } from '../types';
 
+interface ActivityFilters {
+  targetType?: string;
+  targetId?: string;
+  type?: string;
+  page?: number;
+  limit?: number;
+  [key: string]: string | number | undefined;
+}
+
 /**
  * Activity Service
  * Manages all API calls for activities/notes functionality
@@ -18,7 +27,7 @@ export class ActivityService extends BaseApiClient {
    * @param filters - Query parameters (targetType, targetId, page, limit, etc.)
    * @returns Response with paginated activities
    */
-  async getActivities(filters: Record<string, any>): Promise<{ data: Activity[] }> {
+  async getActivities(filters: ActivityFilters): Promise<{ data: Activity[] }> {
     return this.GET<{ data: Activity[] }>('', filters);
   }
 

@@ -2,41 +2,47 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { MonthlyAttendanceSummary } from '../types';
 
-function MonthlyAttendanceCard({ summary }: { summary: MonthlyAttendanceSummary }) {
-  const getMonthName = (month: number) => {
-    const names = [
-      'Tháng 1',
-      'Tháng 2',
-      'Tháng 3',
-      'Tháng 4',
-      'Tháng 5',
-      'Tháng 6',
-      'Tháng 7',
-      'Tháng 8',
-      'Tháng 9',
-      'Tháng 10',
-      'Tháng 11',
-      'Tháng 12',
-    ];
-    return names[month - 1];
-  };
-
-  const AttendanceStat = ({
-    value,
-    label,
-    bgColor,
-    textColor,
-  }: {
-    value: number;
-    label: string;
-    bgColor: string;
-    textColor: string;
-  }) => (
+/**
+ * AttendanceStat Component
+ * Display a single attendance stat (e.g., Present, Late, Absent, On Leave)
+ */
+function AttendanceStat({
+  value,
+  label,
+  bgColor,
+  textColor,
+}: {
+  value: number;
+  label: string;
+  bgColor: string;
+  textColor: string;
+}) {
+  return (
     <div className={`rounded-lg ${bgColor} p-3 text-center`}>
       <p className={`text-lg font-bold ${textColor}`}>{value}</p>
       <p className={`text-xs ${textColor} opacity-75`}>{label}</p>
     </div>
   );
+}
+
+function MonthlyAttendanceCard({ summary }: { summary: MonthlyAttendanceSummary }) {
+  const getMonthName = (month: number) => {
+    const names = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return names[month - 1];
+  };
 
   return (
     <Card className="p-4">
@@ -46,32 +52,32 @@ function MonthlyAttendanceCard({ summary }: { summary: MonthlyAttendanceSummary 
             {getMonthName(summary.month)} {summary.year}
           </h4>
           <p className="text-sm text-gray-600">
-            Tổng ngày làm việc: <span className="font-medium">{summary.workingDays}</span> ngày
+            Total working days: <span className="font-medium">{summary.workingDays}</span> days
           </p>
         </div>
       </div>
       <div className="grid gap-2 grid-cols-4">
         <AttendanceStat
           value={summary.present}
-          label="Có mặt"
+          label="Present"
           bgColor="bg-green-50"
           textColor="text-green-700"
         />
         <AttendanceStat
           value={summary.late}
-          label="Đi muộn"
+          label="Late"
           bgColor="bg-yellow-50"
           textColor="text-yellow-700"
         />
         <AttendanceStat
           value={summary.absent}
-          label="Vắng mặt"
+          label="Absent"
           bgColor="bg-red-50"
           textColor="text-red-700"
         />
         <AttendanceStat
           value={summary.onLeave}
-          label="Nghỉ phép"
+          label="On Leave"
           bgColor="bg-blue-50"
           textColor="text-blue-700"
         />
@@ -102,7 +108,7 @@ export function AttendanceSummaryList({
   if (summaries.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-gray-600">Chưa có dữ liệu chấm công</p>
+        <p className="text-gray-600">No attendance data available</p>
       </div>
     );
   }
